@@ -1,0 +1,4 @@
+name = "MeshGraphs"
+uuid = "9c3b456d-075c-421b-b774-fb43dd44b54d"
+authors = ["Pawel Maczuga <pmaczuga97@gmail.com>"]
+version = "0.1.0"
