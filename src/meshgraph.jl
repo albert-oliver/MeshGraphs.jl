@@ -40,6 +40,28 @@ See also: [`FlatGraph`](@ref), [`SphereGraph`](@ref)
 abstract type MeshGraph end
 
 # -----------------------------------------------------------------------------
+# ------ Functions for updating coordinates -----------------------------------
+# -----------------------------------------------------------------------------
+
+"Recalculate `xyz` of vertex `v` using `uv` and `elevation`."
+function update_xyz! end
+
+"Recalculate `uv` and `elevation` of vertex `v` using `xyz`."
+function update_uv_elev! end
+
+validate_xyz(
+    g::MeshGraph,
+    coords::AbstractVector{<:Real},
+)::AbstractVector{<:Real} = coords[1:3]
+
+validate_uv(
+    g::MeshGraph,
+    coords::AbstractVector{<:Real},
+)::AbstractVector{<:Real} = coords[1:2]
+
+validate_elevation(g::MeshGraph, elevation::Real)::Real = elevation
+
+# -----------------------------------------------------------------------------
 # ------ Functions for adding and removing vertices and edges -----------------
 # -----------------------------------------------------------------------------
 
@@ -49,25 +71,56 @@ abstract type MeshGraph end
 
 Add new vertex to graph `g`. Return its `id`.
 
-## For `FlatGraph`:
-- when `elevation` is not delivered add vertex with coordinates:
-    - `x = coords[1]`
-    - `y = coords[2]`
-    - `elevation = z = coords[3]`
-- when `elevation` is delivered only two first elements of `coords` are used
-## For `SphereGraph`
 - when `elevation` is not delivered add vertex with coordinates:
     - `x = coords[1]`
     - `y = coords[2]`
     - `z = coords[3]`
-    - and calculate `lat`, `lon` and `elevation`
+    - and calculate `uv` and `elevation`
 - when `elevation` is delivered:
-    - `lat = coords[1]` has to be in range [-90, 90]
-    - `lon = coords[2]` can be any real number, is moved to range (-180, 180]
+    - `u = coords[1]`
+    - `v = coords[2]`
     - `elevation = elevation`
-    - and calculate `x`, `y`, `z`
+    - and calculate `xyz`
+
+## Limitations
+### SphereGraph
+- `u = lon` can be any real number, is moved to range (-180, 180]
+- `v = lay` has to be in range [-90, 90]
 """
 function add_vertex! end
+
+function add_vertex!(
+    g::MeshGraph,
+    coords::AbstractVector{<:Real};
+    value::Real = 0.0,
+)::Integer
+    coords = validate_xyz(g, coords)
+    Gr.add_vertex!(g.graph)
+    MG.set_prop!(g.graph, nv(g), :type, VERTEX)
+    MG.set_prop!(g.graph, nv(g), :value, value)
+    MG.set_prop!(g.graph, nv(g), :xyz, coords)
+    update_uv_elev!(g, nv(g))
+    g.vertex_count += 1
+    return nv(g)
+end
+
+function add_vertex!(
+    g::MeshGraph,
+    coords::AbstractVector{<:Real},
+    elevation::Real;
+    value::Real = 0.0,
+)::Integer
+    coords = validate_uv(g, coords)
+    elevation = validate_elevation(g, elevation)
+    Gr.add_vertex!(g.graph)
+    MG.set_prop!(g.graph, nv(g), :type, VERTEX)
+    MG.set_prop!(g.graph, nv(g), :value, value)
+    MG.set_prop!(g.graph, nv(g), :uv, coords)
+    MG.set_prop!(g.graph, nv(g), :elevation, elevation)
+    update_xyz!(g, nv(g))
+    g.vertex_count += 1
+    return nv(g)
+end
 
 """
     add_hanging!(g, v1, v2, elevation; value=0)
@@ -291,23 +344,11 @@ end
 # ------ Used in mosed functions below ----------------------------------------
 # -----------------------------------------------------------------------------
 
-"Return vector with cartesian coordinates of vertex `v`. Alias: [`xyz`](@ref)"
-get_cartesian(g::MeshGraph, v::Integer) = MG.get_prop(g.graph, v, :xyz)
+"Return vector with `xyz` coordinates of vertex `v`."
+xyz(g::MeshGraph, v::Integer)::Vector{<:Real} = MG.get_prop(g.graph, v, :xyz)
 
-"Return vector with cartesian coordinates of vertex `v`. Alias of:
-[`get_cartesian`](@ref)"
-const xyz = get_cartesian
-
-"""
-    coords2D(g, v)
-
-Return 2D coordintes of vertex `v`.
-
-For:
-- `FlatGraph` return `[x, y]`
-- `SphereGraph` return `[lon, lat]`
-"""
-function coords2D end
+"Return vector with `uv` coordinates of vertex `v`."
+uv(g::MeshGraph, v::Integer)::Vector{<:Real} = MG.get_prop(g.graph, v, :uv)
 
 get_type(g::MeshGraph, v::Integer)::Integer = MG.get_prop(g.graph, v, :type)
 is_hanging(g::MeshGraph, v::Integer) =
@@ -315,8 +356,12 @@ is_hanging(g::MeshGraph, v::Integer) =
 is_vertex(g::MeshGraph, v::Integer) = MG.get_prop(g.graph, v, :type) == VERTEX
 is_interior(g::MeshGraph, v::Integer) =
     MG.get_prop(g.graph, v, :type) == INTERIOR
-function get_elevation end
-function set_elevation! end
+get_elevation(g::MeshGraph, v::Integer)::Real =
+    MG.get_prop(g.graph, v, :elevation)
+function set_elevation!(g::MeshGraph, v::Integer, elevation::Real)
+    MG.set_prop!(g.graph, v, :elevation, elevation)
+    update_xyz!(g, v)
+end
 get_value(g::MeshGraph, v::Integer)::Real = MG.get_prop(g.graph, v, :value)
 set_value!(g::MeshGraph, v::Integer, value::Real) =
     MG.set_prop!(g.graph, v, :value, value)
@@ -420,7 +465,7 @@ vertex_map(g::MeshGraph) =
     Dict(v => i for (i, v) in enumerate(vertices_except_type(g, INTERIOR)))
 
 "Scales all coordinates of graph `g` by `scale`. In case of `SphereGraph` also
-scales radius"
+scales `radius`"
 function scale_graph end
 
 include("flatgraph.jl")

@@ -26,11 +26,19 @@ mutable struct FlatGraph <: MeshGraph
     vertex_count::Integer
     interior_count::Integer
     hanging_count::Integer
+    xy_to_uv::Function
+    uv_to_xy::Function
+end
+
+function FlatGraph(xy_to_uv::Function, uv_to_xy::Function)
+    graph = MG.MetaGraph()
+    FlatGraph(graph, 0, 0, 0, xy_to_uv, uv_to_xy)
 end
 
 function FlatGraph()
-    graph = MG.MetaGraph()
-    FlatGraph(graph, 0, 0, 0)
+    xy_to_uv = coords -> coords
+    uv_to_xy = coords -> coords
+    FlatGraph(identity, identity)
 end
 
 function show(io::IO, g::FlatGraph)
@@ -45,46 +53,23 @@ function show(io::IO, g::FlatGraph)
 end
 
 # -----------------------------------------------------------------------------
-# ------ Methods for MeshGraph functions -------------------------------------
+# ------ Methods for MeshGraph functions --------------------------------------
 # -----------------------------------------------------------------------------
 
-function add_vertex!(
-    g::FlatGraph,
-    coords::AbstractVector{<:Real};
-    value::Real = 0.0,
-)::Integer
-    Gr.add_vertex!(g.graph)
-    MG.set_prop!(g.graph, nv(g), :type, VERTEX)
-    MG.set_prop!(g.graph, nv(g), :value, value)
-    MG.set_prop!(g.graph, nv(g), :xyz, coords[1:3])
-    g.vertex_count += 1
-    return nv(g)
+function update_xyz!(g::FlatGraph, v::Integer)
+    uv_coords = uv(g, v)
+    elevation = get_elevation(g, v)
+    x, y = g.uv_to_xy(uv_coords)
+    MG.set_prop!(g.graph, v, :xyz, [x, y, elevation])
 end
 
-function add_vertex!(
-    g::FlatGraph,
-    coords::AbstractVector{<:Real},
-    elevation::Real;
-    value::Real = 0.0,
-)::Integer
-    Gr.add_vertex!(g.graph)
-    MG.set_prop!(g.graph, nv(g), :type, VERTEX)
-    MG.set_prop!(g.graph, nv(g), :value, value)
-    xyz = vcat(coords[1:2], [elevation])
-    MG.set_prop!(g.graph, nv(g), :xyz, xyz)
-    g.vertex_count += 1
-    return nv(g)
+function update_uv_elev!(g::FlatGraph, v::Integer)
+    xyz_coords = xyz(g, v)
+    uv_coords = g.xy_to_uv(xyz_coords[1:2])
+    elevation = xyz_coords[3]
+    MG.set_prop!(g.graph, v, :elevation, elevation)
+    MG.set_prop!(g.graph, v, :uv, uv_coords)
 end
-
-get_elevation(g::FlatGraph, v::Integer) = MG.get_prop(g.graph, v, :xyz)[3]
-
-function set_elevation!(g::FlatGraph, v::Integer, elevation::Real)
-    coords = MG.get_prop(g.graph, v, :xyz)
-    coords[3] = elevation
-    MG.set_prop!(g.graph, v, :xyz, coords)
-end
-
-coords2D(g::FlatGraph, v::Integer) = xyz(g, v)[1:2]
 
 get_value_cartesian(g::FlatGraph, v::Integer) =
     xyz(g, v) + [0, 0, get_value(g, v)]
@@ -94,4 +79,8 @@ function scale_graph(g::FlatGraph, scale::Real)
         new_xyz = xyz(g, v) * scale
         MG.set_prop!(g.graph, v, :xyz, new_xyz)
     end
+    xy_to_uv = g.xy_to_uv
+    g.xy_to_uv = coords -> xy_to_uv / scale
+    uv_to_xy = g.uv_to_xy
+    g.uv_to_xy = coords -> uv_to_xy * scale
 end

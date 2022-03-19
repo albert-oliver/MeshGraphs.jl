@@ -43,7 +43,7 @@ export
     unset_hanging!,
     get_cartesian,
     xyz,
-    coords2D,
+    uv,
     get_type,
     is_hanging,
     is_vertex,
@@ -73,7 +73,6 @@ export
     scale_graph,
 
     # SphereGraph only
-    uv,
     get_spherical,
     lat,
     lon
