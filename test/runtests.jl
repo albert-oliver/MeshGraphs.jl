@@ -1,5 +1,5 @@
 using MeshGraphs
 using Test
 
-include("meshgraphs.jl")
-
+include("unit/unit.jl")
+include("integration/integration.jl")
