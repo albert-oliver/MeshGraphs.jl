@@ -9,13 +9,16 @@ const VERTEX = 1
 const HANGING = 2
 const INTERIOR = 3
 
+abstract type AbstractMeshGraph end
+
 """
-Abstract type that holds `MeshGraph`.
+Type that holds `MeshGraph` subtype of abstract `AbstractMeshGraph`.
 
 MeshGraph is a hypergraph representing triangle mesh and has two types of
 vertices:
 - `VERTEX` - normal vertex of graph
-- `INTERIOR` - vertex representing inside of trinagle
+- `HANGING` - whether vertex is hanging node - used during refinement, final graph will not have those
+- `INTERIOR` - vertex representing inside of triangle
 
 Vertices are indexed by integers starting at 1.
 
@@ -24,28 +27,92 @@ Vertices are indexed by integers starting at 1.
     - `xyz` - carstesian coordinates of vertex
     - `elevation`- elevation of point above sea level (or below when negative)
     - `uv` - mapping of vertex to flat surface (e.g. latitude, longitude)
+- `HANGING`
+    - all properties of `VERTEX` plus
+    - `v1`, `v2` - hanging node lies between vertices `v1` and `v2`
 - `INTERIOR`:
     - `refine::Bool`: whether this traingle should be refined
 
 # Edge properties
 - `boundary::Bool` - whether this edge lies on boundary of mesh
 
-# Usage
-Simple flow would look like this:
+# Simple usage
 1. Create initial graph
 2. Mark trainagles that needs to be refined
-3. Use [`refine!`](@ref) function to break all the marked triangles
+3. Use [`refine_xyz!`](@ref) / [`refine_uve!`](@ref) function to break all the marked triangles
 4. Go to (2.)
 
+# Refiner properties
 Properties of refiner that can be adjusted:
+- Which coordinates are used during refinement: `uv` or `xyz`
 - How to convert from `uv` and to `elevation` and `xyz`
 - How to convert from `xyz` to `elevation` and `uv`
-- Which coordinates are used during refinement: `uv` or `xyz`
 - How to calculate distance between two vertices - longest edge will be broken
-```
-"""
-abstract type AbstractMeshGraph end
 
+To choose coordinates of new vertex one has to use:
+- [`add_vertex_xyz!`] and [`refine_using_xyz!`] - for `xyz`
+- [`add_vertex_uve!`] and [`refine_using_uv!`] - for `xyz`
+
+Conversion is done using functions passed as an argument to functions above. For
+details see their documentation.
+
+# Custom types
+To easiest way to create custom graph type using `MeshGraph` is the following:
+
+- Create custom struct with custom fields and `MeshGraph` as one of them
+```
+struct Mygraph
+    g::MeshGraph
+    my_field::Integer
+end
+```
+
+- Choose the way refiner will adds new vertices - using `uv` or `xyz`. We will choocs `uv` here.
+
+- Implement functions to shift refiner to your needs, so the tow following:
+
+- Coordinate converter
+```
+uv_to_elev_xyz(coords) = 42, [coords[1], coords[2], 42]
+#                        /\\              /\\
+#                    elevation       xyz coords
+# Here we always set `elevation` and `z` to 42
+```
+
+- And distance function
+```
+function refine_distance(g, v1, v2)
+    coords1 = xyz(g, v1)[1:2]
+    coords2 = xyz(g, v2)[1:2]
+    return norm(coords1 - coords2)
+end
+# Here we calculate Euclidean distance igonoring `z` coordiante
+```
+
+- Implement custom `add_vertex!`
+```
+add_vertex!(g::MyGraph, coords) =
+    add_vertex_uve!(g, coords; uv_to_elev_xyz=uv_to_elev_xyz)
+```
+
+- Implement custom `refine!`
+```
+refine!(g::MyGraph) =
+    refine_uve!(g, uv_to_elev_xyz=uv_to_elev_xyz, refine_distance=refine_distance)
+```
+
+- Have fun
+
+# Note
+When creating custom type is might be useful to use `@forward` from
+`ReusePatterns.jl`:
+```
+@forward((MyGraph, :g), MeshGraph)
+```
+
+So that all functions for `MeshGraph` are also available for `MyGraph`, instead
+accessing field all the time.
+"""
 mutable struct MeshGraph <: AbstractMeshGraph
     graph::MG.MetaGraph
     vertex_count::Integer
@@ -69,39 +136,36 @@ end
 # ------ Functions for adding and removing vertices and edges -----------------
 # -----------------------------------------------------------------------------
 
-default_uv_to_elev_xyz(coords) = 0, vcat(coords, 0)
-default_xyz_to_elev_uv(coords) = coords[3], coords[1:2]
-
 """
-    add_vertex_uv!(g, coords; uv_to_elev_xyz)
+    add_vertex_uve!(g, coords; uve_to_xyz)
 
-Add new vertex with `uv` coords `coords` to graph `g`. Calculate `elevation` and
+Add new vertex with `[u, v, elevation]` coords `coords` to graph `g`. Calculate
 `xyz`. Return its `id`.
 
 # Arguments:
 - `g::AbstractMeshGraph`: Graph where the vertex will be added
-- `coords::AbstractVector{<:Real}`: `uv` coordinates of new vertex
+- `coords::AbstractVector{<:Real}`: `[u, v, elevation]` coordinates of new vertex
 - `uv_to_elev_xyz::Function`
 
 Where:
-    uv_to_elev_xyz(coords)
+    uve_to_xyz(coords)
 
-Calculate `elevation` and `xyz` based on `uv` coordinates (`coords`).
+Calculate `xyz` based on `uv` coordinates and `elevation` (`coords`).
 Return `(elevation::Real, xyz::Vector)`. Defaults to:
 - `x = u`
 - `y = v`
-- `z = elevation = 0`
+- `z = elevation`
 
 See also [`add_vertex_xyz!`](@ref)
 """
-add_vertex_uv!(
+add_vertex_uve!(
     g::AbstractMeshGraph,
     coords::AbstractVector{<:Real};
-    uv_to_elev_xyz::Function = default_uv_to_elev_xyz,
-)::Integer = add_vertex!(g, coords, true, uv_to_elev_xyz)
+    uve_to_xyz::Function = identity,
+)::Integer = add_vertex!(g, coords, true, uve_to_xyz)
 
 """
-    add_vertex_xyz!(g, coords; xyz_to_uv_elev)
+    add_vertex_xyz!(g, coords; xyz_to_uve)
 
 Add new vertex with `xyz` coords `coords` to graph `g`. Calculate `uv` and
 `elevation`. Return its `id`.
@@ -109,25 +173,39 @@ Add new vertex with `xyz` coords `coords` to graph `g`. Calculate `uv` and
 # Arguments:
 - `g::AbstractMeshGraph`: Graph where the vertex will be added
 - `coords::AbstractVector{<:Real}`: `xyz` coordinates of new vertex
-- `xyz_to_elev_uv::Function`
+- `xyz_to_uve::Function`
 
 Where:
-    xyz_to_elev_uv(coords)
+    xyz_to_uve(coords)
 
 Calculate `elevation` and `uv` based on `xyz` coordinates (`coords`).
-Return `(elevation::Real, uv::Vector)`. Defaults to:
+Return `[u, v, elevation]` vector. Defaults to:
 - `u = x`
 - `v = y`
 - `elevation = z`
 
-See also [`add_vertex_uv!`](@ref)
+See also [`add_vertex_uve!`](@ref)
 """
 add_vertex_xyz!(
     g::AbstractMeshGraph,
     coords::AbstractVector{<:Real};
-    xyz_to_elev_uv::Function = default_xyz_to_elev_uv,
-)::Integer = add_vertex!(g, coords, false, xyz_to_elev_uv)
+    xyz_to_uve::Function = identity,
+)::Integer = add_vertex!(g, coords, false, xyz_to_uve)
 
+"""
+    add_vertex!(g, coords, use_uv, convert_fun)
+
+Add new vertex with to graph `g`.
+
+If flag `use_uv` is set:
+- Add vertex with `xyz` coordinates `coords`
+- Calculate `elevation` and `uv` using `convert_fun` function
+Else:
+- Add vertex with `uv` coordinates `coords`
+- Calculate `elevation` and `xyz` using `convert_fun` function
+
+For details see [`add_vertex_uve!`](@ref), [`add_vertex_xyz!`](@ref)
+"""
 function add_vertex!(
     g::AbstractMeshGraph,
     coords::AbstractVector{<:Real},
@@ -136,12 +214,12 @@ function add_vertex!(
 )::Integer
     Gr.add_vertex!(g.graph)
     MG.set_prop!(g.graph, nv(g), :type, VERTEX)
-    elev, converted_coords =
-        convert_fun(coords)::Tuple{Real,AbstractVector{<:Real}}
-    MG.set_prop!(g.graph, nv(g), :elevation, elev)
+    converted_coords =
+        convert_fun(coords)::AbstractVector{<:Real}
     xyz_coords, uv_coords =
         use_uv ? (converted_coords, coords) : (coords, converted_coords)
-    MG.set_prop!(g.graph, nv(g), :uv, uv_coords)
+    MG.set_prop!(g.graph, nv(g), :uv, uv_coords[1:2])
+    MG.set_prop!(g.graph, nv(g), :elevation, uv_coords[3])
     MG.set_prop!(g.graph, nv(g), :xyz, xyz_coords)
     g.vertex_count += 1
     return nv(g)
@@ -161,15 +239,34 @@ See also: [`add_vertex!`](@ref)
 """
 function add_hanging!(
     g::AbstractMeshGraph,
+    coords::AbstractVector{<:Real},
     v1::Integer,
     v2::Integer,
-    coords::AbstractVector{<:Real},
     use_uv::Bool,
     convert_fun::Function,
 )
     add_vertex!(g, coords, use_uv, convert_fun)
     set_hanging!(g, nv(g), v1, v2)
     nv(g)
+end
+
+function add_hanging_xyz!(g::AbstractMeshGraph,
+    coords::AbstractVector{<:Real},
+    v1::Integer,
+    v2::Integer;
+    xyz_to_uve::Function = identity,
+)
+    add_hanging!(g, coords, v1, v2, false, xyz_to_uve)
+end
+
+
+function add_hanging_uve!(g::AbstractMeshGraph,
+    coords::AbstractVector{<:Real},
+    v1::Integer,
+    v2::Integer;
+    uve_to_xyz::Function = identity,
+)
+    add_hanging!(g, coords, v1, v2, true, uve_to_xyz)
 end
 
 """
@@ -350,20 +447,33 @@ function unset_hanging!(g::AbstractMeshGraph, v::Integer)
     g.vertex_count += 1
 end
 
-"Return vector with `xyz` coordinates of vertex `v`."
-xyz(g::AbstractMeshGraph, v::Integer)::Vector{<:Real} = MG.get_prop(g.graph, v, :xyz)
+"Return vector with `xyz` coordinates of vertex `v`"
+xyz(g::AbstractMeshGraph, v::Integer)::Vector{<:Real} =
+    MG.get_prop(g.graph, v, :xyz)
 
-"Return vector with `uv` coordinates of vertex `v`."
-uv(g::AbstractMeshGraph, v::Integer)::Vector{<:Real} = MG.get_prop(g.graph, v, :uv)
+"Return vector with `uv` coordinates of vertex `v`"
+uv(g::AbstractMeshGraph, v::Integer)::Vector{<:Real} =
+    MG.get_prop(g.graph, v, :uv)
 
-get_type(g::AbstractMeshGraph, v::Integer)::Integer = MG.get_prop(g.graph, v, :type)
+"Return vector `[u, v, elevation]`"
+uve(g::AbstractMeshGraph, v::Integer)::Vector{<:Real} =
+    vcat(uv(g, v), get_elevation(g, v))
+
+get_type(g::AbstractMeshGraph, v::Integer)::Integer =
+    MG.get_prop(g.graph, v, :type)
+
 is_hanging(g::AbstractMeshGraph, v::Integer) =
     MG.get_prop(g.graph, v, :type) == HANGING
-is_vertex(g::AbstractMeshGraph, v::Integer) = MG.get_prop(g.graph, v, :type) == VERTEX
+
+is_vertex(g::AbstractMeshGraph, v::Integer) =
+    MG.get_prop(g.graph, v, :type) == VERTEX
+
 is_interior(g::AbstractMeshGraph, v::Integer) =
     MG.get_prop(g.graph, v, :type) == INTERIOR
+
 get_elevation(g::AbstractMeshGraph, v::Integer)::Real =
     MG.get_prop(g.graph, v, :elevation)
+
 function set_elevation!(g::AbstractMeshGraph, v::Integer, elevation::Real)
     MG.set_prop!(g.graph, v, :elevation, elevation)
     update_xyz!(g, v)
@@ -371,7 +481,10 @@ end
 
 should_refine(g::AbstractMeshGraph, i::Integer)::Bool =
     MG.get_prop(g.graph, i, :refine)
-set_refine!(g::AbstractMeshGraph, i::Integer) = MG.set_prop!(g.graph, i, :refine, true)
+
+set_refine!(g::AbstractMeshGraph, i::Integer) =
+    MG.set_prop!(g.graph, i, :refine, true)
+
 unset_refine!(g::AbstractMeshGraph, i::Integer) =
     MG.set_prop!(g.graph, i, :refine, false)
 
@@ -385,6 +498,7 @@ is_on_boundary(g::AbstractMeshGraph, v1::Integer, v2::Integer) =
 
 set_boundary!(g::AbstractMeshGraph, v1::Integer, v2::Integer) =
     MG.set_prop!(g.graph, v1, v2, :boundary, true)
+
 unset_boundary!(g::AbstractMeshGraph, v1::Integer, v2::Integer) =
     MG.set_prop!(g.graph, v1, v2, :boundary, true)
 

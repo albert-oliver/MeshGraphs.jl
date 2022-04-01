@@ -4,9 +4,13 @@ export
     MeshGraph,
     VERTEX, INTERIOR,
 
+    # Refiner
+    refine_xyz!,
+    refine_uve!,
+
     # Adding / removing
     add_vertex_xyz!,
-    add_vertex_uv!,
+    add_vertex_uve!,
     add_interior!,
     add_edge!,
 
@@ -14,20 +18,17 @@ export
     all_vertex_count,
     nv,
     vertex_count,
-    hanging_count,
     interior_count,
 
     # Iteratable
     vertices_with_type,
     vertices_except_type,
     normal_vertices,
-    hanging_nodes,
     interiors,
     neighbors,
     neighbors_with_type,
     neighbors_except_type,
     vertex_neighbors,
-    hanging_neighbors,
     interior_neighbors,
     interior_connectivity,
     is_ordinary_edge,
@@ -37,6 +38,7 @@ export
     # Vertex properties
     xyz,
     uv,
+    uve,
     get_type,
     is_vertex,
     is_interior,
@@ -50,10 +52,12 @@ export
     set_boundary!,
     unset_boundary!,
     edge_length,
+    has_edge,
 
     # Other
     vertex_map
 
 include("meshgraph.jl")
+include("refiner/refiner.jl")
 
 end # module

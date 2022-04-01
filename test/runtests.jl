@@ -1,5 +1,9 @@
 using MeshGraphs
 using Test
+using Statistics
+using LinearAlgebra
 
-include("unit/unit.jl")
-include("integration/integration.jl")
+@testset verbose=true "MeshGraphs" begin
+    include("meshgraph/meshgraph.jl")
+    include("refiner/refiner.jl")
+end
