@@ -44,14 +44,15 @@ Vertices are indexed by integers starting at 1.
 
 # Refiner properties
 Properties of refiner that can be adjusted:
-- Which coordinates are used during refinement: `uv` or `xyz`
-- How to convert from `uv` and to `elevation` and `xyz`
-- How to convert from `xyz` to `elevation` and `uv`
+- Which coordinates are used during refinement: [`uve`](@ref) or [`xyz`](@ref)
+- How to convert from [`uve`](@ref) to [`xyz`](@ref)
+- How to convert from [`xyz`](@ref) to [`uve`](@ref)
+- How to calculate coordinates of new vertex based on its neighbors
 - How to calculate distance between two vertices - longest edge will be broken
 
-To choose coordinates of new vertex one has to use:
-- [`add_vertex_xyz!`] and [`refine_using_xyz!`] - for `xyz`
-- [`add_vertex_uve!`] and [`refine_using_uv!`] - for `xyz`
+To choose either `uve` or `xyz` of new vertex one has to use:
+- [`add_vertex_xyz!`](@ref) and [`refine_using_xyz!`](@ref) - for `xyz`
+- [`add_vertex_uve!`](@ref) and [`refine_using_uve!`](@ref) - for `uve`
 
 Conversion is done using functions passed as an argument to functions above. For
 details see their documentation.
@@ -67,16 +68,15 @@ struct Mygraph
 end
 ```
 
-- Choose the way refiner will adds new vertices - using `uv` or `xyz`. We will choocs `uv` here.
+- Choose the way refiner will adds new vertices - using `uve` or `xyz`. We will choocs `uve` here.
 
 - Implement functions to shift refiner to your needs, so the tow following:
 
 - Coordinate converter
 ```
-uv_to_elev_xyz(coords) = 42, [coords[1], coords[2], 42]
-#                        /\\              /\\
-#                    elevation       xyz coords
-# Here we always set `elevation` and `z` to 42
+uve_to_xyz(coords) = [coords[1], coords[2], 42]
+#
+# Here we always set `z` and to 42
 ```
 
 - And distance function
@@ -92,26 +92,29 @@ end
 - Implement custom `add_vertex!`
 ```
 add_vertex!(g::MyGraph, coords) =
-    add_vertex_uve!(g, coords; uv_to_elev_xyz=uv_to_elev_xyz)
+    add_vertex_uve!(g, coords; uve_to_xyz=uve_to_xyz)
 ```
 
 - Implement custom `refine!`
 ```
 refine!(g::MyGraph) =
-    refine_uve!(g, uv_to_elev_xyz=uv_to_elev_xyz, refine_distance=refine_distance)
+    refine_uve!(g, uve_to_xyz=uve_to_xyz, refine_distance=refine_distance)
 ```
 
 - Have fun
 
 # Note
-When creating custom type is might be useful to use `@forward` from
-`ReusePatterns.jl`:
+- When creating custom type is might be useful to use `@forward` from `ReusePatterns.jl`:
 ```
 @forward((MyGraph, :g), MeshGraph)
 ```
 
 So that all functions for `MeshGraph` are also available for `MyGraph`, instead
 accessing field all the time.
+
+- It might me useful when creating custom `refine!` (or `add_vertex!`) to use custom field
+
+See also: [`refine_xyz!`](@ref), [`refine_uve!`](@ref)
 """
 mutable struct MeshGraph <: AbstractMeshGraph
     graph::MG.MetaGraph
@@ -151,7 +154,7 @@ Where:
     uve_to_xyz(coords)
 
 Calculate `xyz` based on `uv` coordinates and `elevation` (`coords`).
-Return `(elevation::Real, xyz::Vector)`. Defaults to:
+Return vector `[x, y, z]`. Defaults to:
 - `x = u`
 - `y = v`
 - `z = elevation`
