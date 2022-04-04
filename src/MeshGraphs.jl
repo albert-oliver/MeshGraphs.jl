@@ -1,9 +1,10 @@
 module MeshGraphs
 
-export
-    AbstractMeshGraph,
+export AbstractMeshGraph,
     MeshGraph,
-    VERTEX, INTERIOR, HANGING,
+    VERTEX,
+    INTERIOR,
+    HANGING,
 
     # Refiner
     refine_xyz!,
@@ -56,9 +57,16 @@ export
     has_edge,
 
     # Other
-    vertex_map
+    vertex_map,
+    update_boundaries!,
+    rectangle_graph_uve,
+    export_inp
+
 
 include("meshgraph.jl")
 include("refiner/refiner.jl")
+include("utils.jl")
+include("io.jl")
+include("rectangle_mesh.jl")
 
 end # module

@@ -307,7 +307,7 @@ function add_interior!(
     vs::AbstractVector{<:Real};
     refine::Bool = false,
 )
-    add_interior!(vs[v1], vs[v2], vs[v3]; refine=refine)
+    add_interior!(g, vs[1], vs[2], vs[3]; refine=refine)
 end
 
 "Add edge between vertices `v1` and `v2`. Set `boundary` flag if delivered."
@@ -406,7 +406,7 @@ interior_neighbors(g::AbstractMeshGraph, v::Integer) =
     neighbors_with_type(g, v, INTERIOR)
 
 "Return three vertices that make triangle represented by interior `i`"
-interiors_vertices(g::AbstractMeshGraph, i::Integer) = neighbors(g, i)
+interior_connectivity(g::AbstractMeshGraph, i::Integer) = neighbors(g, i)
 
 "Check if edge between `v1` `v2` is ordinary, that is if it doesn't connect
 `INTERIOR` to its vertices."
@@ -503,7 +503,7 @@ set_boundary!(g::AbstractMeshGraph, v1::Integer, v2::Integer) =
     MG.set_prop!(g.graph, v1, v2, :boundary, true)
 
 unset_boundary!(g::AbstractMeshGraph, v1::Integer, v2::Integer) =
-    MG.set_prop!(g.graph, v1, v2, :boundary, true)
+    MG.set_prop!(g.graph, v1, v2, :boundary, false)
 
 "Return length of edge as euclidean distance between cartesian coordiantes of
 its vertices"

@@ -61,7 +61,7 @@ function check_p5(g::MeshGraph, center::Integer, distance_fun::Function)
         return nothing
     end
 
-    vs = interiors_vertices(g, center)
+    vs = interior_connectivity(g, center)
     vA = vs[1]
     vB = vs[2]
     vC = vs[3]
