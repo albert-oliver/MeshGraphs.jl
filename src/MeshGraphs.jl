@@ -1,8 +1,9 @@
 module MeshGraphs
 
 export
+    AbstractMeshGraph,
     MeshGraph,
-    VERTEX, INTERIOR,
+    VERTEX, INTERIOR, HANGING
 
     # Refiner
     refine_xyz!,
