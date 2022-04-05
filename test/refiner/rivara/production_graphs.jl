@@ -1,12 +1,12 @@
 "Return graph on which production P1 should run."
 function p1_graph_1()
-    g = MeshGraph()
+    g = SimpleGraph()
 
-    add_vertex_xyz!(g, [0.0, 1.0, 0.0])
-    add_vertex_xyz!(g, [0.0, -1.0, 0.0])
-    MeshGraphs.add_hanging_xyz!(g, [0.0, 0.0, 0.0], 1, 2)
-    add_vertex_xyz!(g, [1.0, 0.0, 1.0])
-    add_vertex_xyz!(g, [0.5, 1.0, -1.0])
+    add_vertex!(g, [0.0, 1.0, 0.0])
+    add_vertex!(g, [0.0, -1.0, 0.0])
+    MeshGraphs.add_hanging!(g, [0.0, 0.0, 0.0], 1, 2)
+    add_vertex!(g, [1.0, 0.0, 1.0])
+    add_vertex!(g, [0.5, 1.0, -1.0])
 
     add_interior!(g, 3, 4, 5; refine=true)
 
@@ -19,11 +19,11 @@ end
 
 "Return graph on which production P1 should run."
 function p1_graph_2()
-    g = MeshGraph()
+    g = SimpleGraph()
 
-    add_vertex_xyz!(g, [0.0, 0.0, 0.0])
-    add_vertex_xyz!(g, [1.0, 0.0, 1.0])
-    add_vertex_xyz!(g, [0.5, 1.0, -1.0])
+    add_vertex!(g, [0.0, 0.0, 0.0])
+    add_vertex!(g, [1.0, 0.0, 1.0])
+    add_vertex!(g, [0.5, 1.0, -1.0])
 
     add_interior!(g, 1, 2, 3; refine=true)
 
@@ -36,12 +36,12 @@ end
 
 "Return graph on which production P2 should run."
 function p2_graph_1()
-    g = MeshGraph()
+    g = SimpleGraph()
 
-    add_vertex_xyz!(g, [0.0, 0.0, 0.0])
-    add_vertex_xyz!(g, [1.0, 1.0, 0.0])
-    add_vertex_xyz!(g, [2.0, 0.0, 0.0])
-    MeshGraphs.add_hanging_xyz!(g, [1.0, 0.0, 0.0], 1, 3)
+    add_vertex!(g, [0.0, 0.0, 0.0])
+    add_vertex!(g, [1.0, 1.0, 0.0])
+    add_vertex!(g, [2.0, 0.0, 0.0])
+    MeshGraphs.add_hanging!(g, [1.0, 0.0, 0.0], 1, 3)
 
     add_interior!(g, 1, 2, 3)
 
@@ -55,12 +55,12 @@ end
 
 "Return graph on which production P3 should run."
 function p3_graph_1()
-    g = MeshGraph()
+    g = SimpleGraph()
 
-    add_vertex_xyz!(g, [0.0, 0.0, 0.0])
-    add_vertex_xyz!(g, [0.0, 1.0, 0.0])
-    add_vertex_xyz!(g, [2.0, 0.0, 0.0])
-    MeshGraphs.add_hanging_xyz!(g, [1.0, 0.0, 0.0], 1, 3)
+    add_vertex!(g, [0.0, 0.0, 0.0])
+    add_vertex!(g, [0.0, 1.0, 0.0])
+    add_vertex!(g, [2.0, 0.0, 0.0])
+    MeshGraphs.add_hanging!(g, [1.0, 0.0, 0.0], 1, 3)
 
     add_interior!(g, 1, 2, 3)
 
@@ -74,12 +74,12 @@ end
 
 "Return graph on which production P3 should run."
 function p3_graph_2()
-    g = MeshGraph()
+    g = SimpleGraph()
 
-    add_vertex_xyz!(g, [0.0, 0.0, 0.0])
-    add_vertex_xyz!(g, [0.0, 1.0, 0.0])
-    add_vertex_xyz!(g, [2.0, 0.0, 0.0])
-    MeshGraphs.add_hanging_xyz!(g, [1.0, 0.0, 0.0], 1, 3)
+    add_vertex!(g, [0.0, 0.0, 0.0])
+    add_vertex!(g, [0.0, 1.0, 0.0])
+    add_vertex!(g, [2.0, 0.0, 0.0])
+    MeshGraphs.add_hanging!(g, [1.0, 0.0, 0.0], 1, 3)
 
     add_interior!(g, 1, 2, 3)
 
@@ -93,13 +93,13 @@ end
 
 "Return graph on which production P4 should run."
 function p4_graph_1()
-    g = MeshGraph()
+    g = SimpleGraph()
 
-    add_vertex_xyz!(g, [0.0, 0.0, 0.0])
-    add_vertex_xyz!(g, [2.0, 0.0, 0.0])
-    add_vertex_xyz!(g, [1.0, 1.0, 0.0])
-    MeshGraphs.add_hanging_xyz!(g, [1.0, 0.0, 0.0], 1, 2)
-    MeshGraphs.add_hanging_xyz!(g, [1.5, 0.5, 0.0], 2, 3)
+    add_vertex!(g, [0.0, 0.0, 0.0])
+    add_vertex!(g, [2.0, 0.0, 0.0])
+    add_vertex!(g, [1.0, 1.0, 0.0])
+    MeshGraphs.add_hanging!(g, [1.0, 0.0, 0.0], 1, 2)
+    MeshGraphs.add_hanging!(g, [1.5, 0.5, 0.0], 2, 3)
 
 
     add_interior!(g, 1, 2, 3)
@@ -115,13 +115,13 @@ end
 
 "Return graph on which production P4 should run."
 function p4_graph_2()
-    g = MeshGraph()
+    g = SimpleGraph()
 
-    add_vertex_xyz!(g, [0.0, 0.0, 0.0])
-    add_vertex_xyz!(g, [2.0, 0.0, 0.0])
-    add_vertex_xyz!(g, [1.0, 1.0, 0.0])
-    MeshGraphs.add_hanging_xyz!(g, [1.0, 0.0, 0.0], 1, 2)
-    MeshGraphs.add_hanging_xyz!(g, [0.5, 0.5, 0.0], 1, 3)
+    add_vertex!(g, [0.0, 0.0, 0.0])
+    add_vertex!(g, [2.0, 0.0, 0.0])
+    add_vertex!(g, [1.0, 1.0, 0.0])
+    MeshGraphs.add_hanging!(g, [1.0, 0.0, 0.0], 1, 2)
+    MeshGraphs.add_hanging!(g, [0.5, 0.5, 0.0], 1, 3)
 
 
     add_interior!(g, 1, 2, 3)
@@ -137,13 +137,13 @@ end
 
 "Return graph on which production P5 should run."
 function p5_graph_1()
-    g = MeshGraph()
+    g = SimpleGraph()
 
-    add_vertex_xyz!(g, [0.0, 0.0, 0.0])
-    add_vertex_xyz!(g, [2.0, 0.0, 0.0])
-    add_vertex_xyz!(g, [1.0, 1.0, 0.0])
-    MeshGraphs.add_hanging_xyz!(g, [0.5, 0.5, 0.0], 1, 3)
-    MeshGraphs.add_hanging_xyz!(g, [1.5, 0.5, 0.0], 2, 3)
+    add_vertex!(g, [0.0, 0.0, 0.0])
+    add_vertex!(g, [2.0, 0.0, 0.0])
+    add_vertex!(g, [1.0, 1.0, 0.0])
+    MeshGraphs.add_hanging!(g, [0.5, 0.5, 0.0], 1, 3)
+    MeshGraphs.add_hanging!(g, [1.5, 0.5, 0.0], 2, 3)
 
     add_interior!(g, 1, 2, 3)
 
@@ -158,13 +158,13 @@ end
 
 "Return graph on which production P5 should run."
 function p5_graph_2()
-    g = MeshGraph()
+    g = SimpleGraph()
 
-    add_vertex_xyz!(g, [0.0, 0.0, 0.0])
-    add_vertex_xyz!(g, [2.0, 0.0, 0.0])
-    add_vertex_xyz!(g, [1.0, 1.0, 0.0])
-    MeshGraphs.add_hanging_xyz!(g, [0.5, 0.5, 0.0], 1, 3)
-    MeshGraphs.add_hanging_xyz!(g, [1.5, 0.5, 0.0], 2, 3)
+    add_vertex!(g, [0.0, 0.0, 0.0])
+    add_vertex!(g, [2.0, 0.0, 0.0])
+    add_vertex!(g, [1.0, 1.0, 0.0])
+    MeshGraphs.add_hanging!(g, [0.5, 0.5, 0.0], 1, 3)
+    MeshGraphs.add_hanging!(g, [1.5, 0.5, 0.0], 2, 3)
 
 
     add_interior!(g, 1, 2, 3)
@@ -180,14 +180,14 @@ end
 
 "Return graph on which production P6 should run."
 function p6_graph_1()
-    g = MeshGraph()
+    g = SimpleGraph()
 
-    add_vertex_xyz!(g, [0.0, 0.0, 0.0])
-    add_vertex_xyz!(g, [2.0, 0.0, 0.0])
-    add_vertex_xyz!(g, [1.0, 1.0, 0.0])
-    MeshGraphs.add_hanging_xyz!(g, [1.0, 0.0, 0.0], 1, 2)
-    MeshGraphs.add_hanging_xyz!(g, [1.5, 0.5, 0.0], 2, 3)
-    MeshGraphs.add_hanging_xyz!(g, [0.5, 0.5, 0.0], 1, 3)
+    add_vertex!(g, [0.0, 0.0, 0.0])
+    add_vertex!(g, [2.0, 0.0, 0.0])
+    add_vertex!(g, [1.0, 1.0, 0.0])
+    MeshGraphs.add_hanging!(g, [1.0, 0.0, 0.0], 1, 2)
+    MeshGraphs.add_hanging!(g, [1.5, 0.5, 0.0], 2, 3)
+    MeshGraphs.add_hanging!(g, [0.5, 0.5, 0.0], 1, 3)
 
     add_interior!(g, 1, 2, 3)
 

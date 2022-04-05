@@ -1,7 +1,7 @@
 function check_p1 end
 
 """
-    transform_p1!(g, center; use_uv, distance_fun, new_coords_fun, converter_fun)
+    transform_p1!(g, center; use_uv, distance, new_coords_fun, converter_fun)
 
 Run transformation P1 on triangle represented by interior `center`.
 
@@ -23,12 +23,8 @@ Conditions:
 function transform_p1!(
     g::MeshGraph,
     center::Integer;
-    use_uv::Bool,
-    distance_fun::Function,
-    new_coords_fun::Function,
-    converter_fun::Function,
 )::Bool
-    mapping = check_p1(g, center, distance_fun)
+    mapping = check_p1(g, center)
     if isnothing(mapping)
         return false
     end
@@ -38,8 +34,8 @@ function transform_p1!(
 
     rem_edge!(g, v1, v2)
 
-    new_coords = new_coords_fun(g, v1, v2)
-    v4 = add_vertex!(g, new_coords, use_uv, converter_fun)
+    new_coords = new_vertex_coords(g, v1, v2)
+    v4 = add_vertex!(g, new_coords)
     if !B1
         set_hanging!(g, v4, v1, v2)
     end
@@ -57,7 +53,7 @@ function transform_p1!(
 end
 
 
-function check_p1(g::MeshGraph, center::Integer, distance_fun::Function)
+function check_p1(g::MeshGraph, center::Integer)
     if !is_interior(g, center)
         return nothing
     elseif !should_refine(g, center)
@@ -83,9 +79,9 @@ function check_p1(g::MeshGraph, center::Integer, distance_fun::Function)
         return nothing
     end
 
-    la = distance_fun(g, vs[1], vs[2])
-    lb = distance_fun(g, vs[2], vs[3])
-    lc = distance_fun(g, vs[3], vs[1])
+    la = distance(g, vs[1], vs[2])
+    lb = distance(g, vs[2], vs[3])
+    lc = distance(g, vs[3], vs[1])
     longest = maximum([la, lb, lc])
 
     if longest == la
@@ -105,9 +101,9 @@ function check_p1(g::MeshGraph, center::Integer, distance_fun::Function)
     B1 = is_on_boundary(g, v1, v2)
     B2 = is_on_boundary(g, v2, h)
     B3 = is_on_boundary(g, h, v1)
-    L1 = distance_fun(g, v1, v2)
-    L2 = distance_fun(g, h, v1)
-    L3 = distance_fun(g, h, v2)
+    L1 = distance(g, v1, v2)
+    L2 = distance(g, h, v1)
+    L3 = distance(g, h, v2)
     HN1 = is_hanging(g, v1)
     HN2 = is_hanging(g, v2)
 

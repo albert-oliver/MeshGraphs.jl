@@ -1,7 +1,7 @@
 function check_p2 end
 
 """
-    transform_p2!(g, center, use_uv, new_coords_fun, converter_fun)
+    transform_p2!(g, center)
 
 Run transgormation P2 on triangle represented by interior `center`.
 
@@ -20,13 +20,9 @@ Conditions:
 """
 function transform_p2!(
     g::MeshGraph,
-    center::Integer;
-    use_uv::Bool,
-    distance_fun::Function,
-    new_coords_fun::Function,
-    converter_fun::Function,
+    center::Integer
 )::Bool
-    mapping = check_p2(g, center, distance_fun)
+    mapping = check_p2(g, center)
     if isnothing(mapping)
         return false
     end
@@ -47,7 +43,7 @@ function transform_p2!(
 end
 
 
-function check_p2(g::MeshGraph, center::Integer, distance_fun::Function)
+function check_p2(g::MeshGraph, center::Integer)
     if !is_interior(g, center)
         return nothing
     end
@@ -92,9 +88,9 @@ function check_p2(g::MeshGraph, center::Integer, distance_fun::Function)
         return nothing
     end
 
-    L12 = distance_fun(g, v1, v2)
-    L3 = distance_fun(g, v2, v3)
-    L4 = distance_fun(g, v1, v3)
+    L12 = distance(g, v1, v2)
+    L3 = distance(g, v2, v3)
+    L4 = distance(g, v1, v3)
 
     if L12 >= L3 && L12 >= L4
         return v1, v2, v3, h

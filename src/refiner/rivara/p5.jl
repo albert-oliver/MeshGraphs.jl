@@ -1,7 +1,7 @@
 function check_p5 end
 
 """
-    transform_p5!(g, center, use_uv, new_coords_fun, converter_fun)
+    transform_p5!(g, center)
 
 Run transgormation P5 on triangle represented by interior `center`.
 
@@ -21,13 +21,9 @@ Conditions:
 """
 function transform_p5!(
     g::MeshGraph,
-    center::Integer;
-    use_uv::Bool,
-    distance_fun::Function,
-    new_coords_fun::Function,
-    converter_fun::Function,
+    center::Integer
 )::Bool
-    mapping = check_p5(g, center, distance_fun)
+    mapping = check_p5(g, center)
     if isnothing(mapping)
         return false
     end
@@ -36,8 +32,8 @@ function transform_p5!(
 
     B5 = is_on_boundary(g, v1, v3)
 
-    new_coords = new_coords_fun(g, v1, v2)
-    v6 = add_vertex!(g, new_coords, use_uv, converter_fun)
+    new_coords = new_vertex_coords(g, v1, v2)
+    v6 = add_vertex!(g, new_coords)
     if !B5
         set_hanging!(g, v6, v1, v3)
     end
@@ -56,7 +52,7 @@ function transform_p5!(
 end
 
 
-function check_p5(g::MeshGraph, center::Integer, distance_fun::Function)
+function check_p5(g::MeshGraph, center::Integer)
     if !is_interior(g, center)
         return nothing
     end
@@ -105,11 +101,11 @@ function check_p5(g::MeshGraph, center::Integer, distance_fun::Function)
         return nothing
     end
 
-    L1 = distance_fun(g, v1, h1)
-    L2 = distance_fun(g, h1, v2)
-    L3 = distance_fun(g, v2, h2)
-    L4 = distance_fun(g, h2, v3)
-    L5 = distance_fun(g, v1, v3)
+    L1 = distance(g, v1, h1)
+    L2 = distance(g, h1, v2)
+    L3 = distance(g, v2, h2)
+    L4 = distance(g, h2, v3)
+    L5 = distance(g, v1, v3)
     HN1 = is_hanging(g, v1)
     HN3 = is_hanging(g, v3)
 
