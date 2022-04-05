@@ -9,7 +9,7 @@ include("rivara/p5.jl")
 include("rivara/p6.jl")
 
 """
-    run_for_all_triangles!(g, production; log=false, kwargs...)
+    run_for_all_triangles!(g, production; log=false)
 
 Run function `production(g, i)` on all interiors `i` of graph `g`
 
@@ -25,11 +25,10 @@ function run_for_all_triangles!(
     g::AbstractMeshGraph,
     production::Function;
     log = false,
-    kwargs...,
 )::Bool
     ran = false
     for v in interiors(g)
-        ex = production(g, v; kwargs...)
+        ex = production(g, v)
         if ex && log
             println("Executed: ", String(Symbol(fun)), " on ", v)
         end
@@ -39,31 +38,35 @@ function run_for_all_triangles!(
 end
 
 """
-    refine!(g; log=false, kwargs...)
+    refine!(g; log=false)
 
-Execute all transformations (P1-P6) on all interiors of graph `g`. Stop when no
-more transformations can be executed.
+Refine graph `g` by breaking all triangles marked `refine`
+([`set_reifne!`](@ref)) and possibly additional ones so that always longest
+edge of traingle will be broken. Rivara's longest-edge refinement algorithm
+adapted for graph-grammars is used.
 
 # Keyword arguments
 - `log::Bool`: whether to log what transformation was executed on which vertex
-- `use_uv::Bool` - Wheter to use `xyz` (`false`) or `uv` and `elevation` (true) as new vertex coordinates
-- `distance_fun::Function`
-- `new_coords_fun::Function`
-- `converter_fun::Function`: convert from `xyz` to `uve` or the other way around. Depends on `use_uv`
 
-For details about delivered functions see [`refine_xyz!`](@ref), [`refine_uve!`](@ref)
+# Control
+Execution can be controlled by providing custom type for graph. For details see
+[`MeshGraph`](@ref)
+
+# Implementation
+Execute all transformations (P1-P6) on all interiors of graph `g`. Stop when no
+more transformations can be executed.
 """
-function refine!(g::AbstractMeshGraph; log=false, kwargs...)
+function refine!(g::AbstractMeshGraph; log=false)
     while true
         ran = false
-        ran |= run_for_all_triangles!(g, transform_p1!; log = log, kwargs...)
-        ran |= run_for_all_triangles!(g, transform_p2!; log = log, kwargs...)
-        ran |= run_for_all_triangles!(g, transform_p3!; log = log, kwargs...)
-        ran |= run_for_all_triangles!(g, transform_p4!; log = log, kwargs...)
-        ran |= run_for_all_triangles!(g, transform_p5!; log = log, kwargs...)
-        ran |= run_for_all_triangles!(g, transform_p6!; log = log, kwargs...)
+        ran |= run_for_all_triangles!(g, transform_p1!; log = log)
+        ran |= run_for_all_triangles!(g, transform_p2!; log = log)
+        ran |= run_for_all_triangles!(g, transform_p3!; log = log)
+        ran |= run_for_all_triangles!(g, transform_p4!; log = log)
+        ran |= run_for_all_triangles!(g, transform_p5!; log = log)
+        ran |= run_for_all_triangles!(g, transform_p6!; log = log)
         if !ran
-            return break
+            break
         end
     end
 end

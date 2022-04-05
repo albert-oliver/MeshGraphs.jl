@@ -1,5 +1,7 @@
 import MetaGraphs; const MG = MetaGraphs
 import Graphs; const Gr = Graphs
+using LinearAlgebra
+using Statistics
 
 # -----------------------------------------------------------------------------
 # ------ MeshGraph type definition -------------------------------------------
@@ -12,7 +14,19 @@ const INTERIOR = 3
 abstract type AbstractMeshGraph end
 
 """
-Type that holds `MeshGraph` subtype of abstract `AbstractMeshGraph`.
+Graph specialization subtype it type to create graphs with custom fields.
+For details see: [`MeshGraph`](@ref)
+"""
+abstract type AbstractSpec end
+
+@enum AddVertexStrategy USE_UVE USE_XYZ
+
+"""
+    mutable struct MeshGraph{T <: AbstractSpec} <: AbstractMeshGraph
+
+Paramteric type that holds `MeshGraph` subtype of abstract `AbstractMeshGraph`.
+`spec::T` field holds graph specialization and can be used to create custom
+types, see below.
 
 MeshGraph is a hypergraph representing triangle mesh and has two types of
 vertices:
@@ -37,51 +51,62 @@ Vertices are indexed by integers starting at 1.
 - `boundary::Bool` - whether this edge lies on boundary of mesh
 
 # Simple usage
-1. Create initial graph
+1. Create `SimpleGraph` graph
 2. Mark trainagles that needs to be refined
-3. Use [`refine_xyz!`](@ref) / [`refine_uve!`](@ref) function to break all the marked triangles
+3. Use [`refine!`](@ref) to break all the marked triangles
 4. Go to (2.)
 
 # Refiner properties
 Properties of refiner that can be adjusted:
 - Which coordinates are used during refinement: [`uve`](@ref) or [`xyz`](@ref)
-- How to convert from [`uve`](@ref) to [`xyz`](@ref)
-- How to convert from [`xyz`](@ref) to [`uve`](@ref)
+- How to convert from [`uve`](@ref) to [`xyz`](@ref) (or the other way around)
 - How to calculate coordinates of new vertex based on its neighbors
 - How to calculate distance between two vertices - longest edge will be broken
 
-To choose either `uve` or `xyz` of new vertex one has to use:
-- [`add_vertex_xyz!`](@ref) and [`refine_using_xyz!`](@ref) - for `xyz`
-- [`add_vertex_uve!`](@ref) and [`refine_using_uve!`](@ref) - for `uve`
-
-Conversion is done using functions passed as an argument to functions above. For
-details see their documentation.
+All of those can be controlled by implementing metohds for following functions:
+- [`add_vertex_strategy`](@ref)
+- [`convert`](@ref)
+- [`distance`](@ref)
+- [`new_vertex_coords`](@ref)
 
 # Custom types
 To easiest way to create custom graph type using `MeshGraph` is the following:
 
-- Create custom struct with custom fields and `MeshGraph` as one of them
+- Create custom graph specialization as subytpe of [`AbstractSpec`](@ref)
 ```
-struct Mygraph
-    g::MeshGraph
+struct MySpec <: AbstractSpec
     my_field::Integer
 end
 ```
 
-- Choose the way refiner will adds new vertices - using `uve` or `xyz`. We will choocs `uve` here.
-
-- Implement functions to shift refiner to your needs, so the tow following:
-
-- Coordinate converter
+- Create alias for `MeshGraph` with your specialization as parameter
 ```
-uve_to_xyz(coords) = [coords[1], coords[2], 42]
+const MyGraph = MeshGraph{MySpec}
+```
+
+- Create custom constructor for your type
+```
+MyGraph(my_field) = MyGraph(MySpec(my_field))
+```
+
+- Implement all the function, whose behaviour you want to adjust:
+
+- Using which coordinates new vertices will be added
+```
+MeshGraphs.add_vertex_strategy(g::MyGraph) = USE_UVE
+```
+
+- How to convert from `uve` to `xyz` (in our case, if we had used `USE_XYZ`, it would be reversed)
+```
+MeshGraphs.convert(g::MyGraph, coords::AbstractVector{<:Real}) =
+    [coords[1], coords[2], spec(g).my_field]
 #
-# Here we always set `z` and to 42
+# Here we always set `z` and to custom field of out graph (`my_field`)
 ```
 
-- And distance function
+- How to calculate distance used in refinement
 ```
-function refine_distance(g, v1, v2)
+function MeshGraphs.distance(g::MyGraph, v1::Integer, v2::Integer)
     coords1 = xyz(g, v1)[1:2]
     coords2 = xyz(g, v2)[1:2]
     return norm(coords1 - coords2)
@@ -89,50 +114,129 @@ end
 # Here we calculate Euclidean distance igonoring `z` coordiante
 ```
 
-- Implement custom `add_vertex!`
-```
-add_vertex!(g::MyGraph, coords) =
-    add_vertex_uve!(g, coords; uve_to_xyz=uve_to_xyz)
-```
-
-- Implement custom `refine!`
-```
-refine!(g::MyGraph) =
-    refine_uve!(g, uve_to_xyz=uve_to_xyz, refine_distance=refine_distance)
-```
-
 - Have fun
 
 # Note
-- When creating custom type is might be useful to use `@forward` from `ReusePatterns.jl`:
-```
-@forward((MyGraph, :g), MeshGraph)
-```
-
-So that all functions for `MeshGraph` are also available for `MyGraph`, instead
-accessing field all the time.
-
-- It might me useful when creating custom `refine!` (or `add_vertex!`) to use custom field
+- In order to create method for `MeshGraphs` functions you have to explicitly
+write that in front of function name
+- All types should be **exactly** as in original definition (except for `g`)
 
 See also: [`refine_xyz!`](@ref), [`refine_uve!`](@ref)
 """
-mutable struct MeshGraph <: AbstractMeshGraph
+mutable struct MeshGraph{T <: AbstractSpec} <: AbstractMeshGraph
+    spec::T
     graph::MG.MetaGraph
     vertex_count::Integer
     interior_count::Integer
     hanging_count::Integer
 
-    MeshGraph() = new(MG.MetaGraph(), 0, 0, 0)
+    MeshGraph(spec::T) where T <: AbstractSpec = new{T}(spec, MG.MetaGraph(), 0, 0, 0)
 end
 
-function show(io::IO, g::MeshGraph)
+function Base.show(io::IO, g::AbstractMeshGraph)
     vs = g.vertex_count
     ins = g.interior_count
     es = length(edges(g))
+    type = typeof(g)
     print(
         io,
-        "MeshGraph with ($(vs) vertices), ($(ins) interiors) and ($(es) edges)",
+        "$(type) with ($(vs) vertices), ($(ins) interiors) and ($(es) edges)",
     )
+end
+
+# -----------------------------------------------------------------------------
+# ------ To implement ---------------------------------------------------------
+# -----------------------------------------------------------------------------
+
+
+"""
+    add_vertex_strategy(g)
+
+What coordinates are used when new vertex is added - [`uve`](@ref) or
+[`xyz`](@ref). Return enum [`AddVertexStrategy`](@ref) - either `USE_XYZ` or
+`USE_UVE`.
+
+# Note
+Shifts behaviour of [`add_vertex!`](@ref) and [`refine!`](@ref).
+
+Method taking parameterized `MeshGraph` can be created to adjust it to your
+needs.
+"""
+function add_vertex_strategy end
+
+"""
+    convert(g, coords)
+
+Convert 3-element vector coords` from `uve` to `xyz` (or reverse).
+
+- If [`add_vertex_strategy`](@ref) returns `USE_UVE` new vertex will be created
+using `uve` coordinates and then converted to `xyz` using this function.
+- If `USE_XYZ` is returned, it will go the other way around.
+
+Defaults to identity.
+
+# Note
+Shifts behaviour of [`add_vertex!`](@ref) and [`refine!`](@ref)
+
+Method taking parameterized `MeshGraph` can be created to adjust it to your
+needs.
+"""
+function convert end
+
+"""
+    distance(g, v1, v2)
+
+Calculate distance between verticves `v1` and `v2` in graph `g`. Longest edge
+according to that distance will always be broken. Defaults to Euclidean
+distance of `xyz` or `uve` coordinates
+(depending on [`add_vertex_strategy`](@ref)).
+
+# Note
+Shifts behaviour of [`refine!`](@ref)
+
+Method taking parameterized `MeshGraph` can be created to adjust it to your
+needs.
+"""
+function distance end
+
+"""
+    new_vertex_coords(g, v1, v2)
+
+Calculate coordinates of vertex created when breaking edge based on neighbors
+(two vertices previously connected with now broken edge). Return
+voords of new vertex (as 3-elemnt Vector).
+Defaults to average of `v1` and `v2`, coordinates.
+
+# Note
+Shifts behaviour of [`refine!`](@ref)
+
+Method taking parameterized `MeshGraph` can be created to adjust it to your
+needs.
+"""
+function new_vertex_coords end
+
+# -----------------------------------------------------------------------------
+# ------ Default implementation------------------------------------------------
+# -----------------------------------------------------------------------------
+
+function add_vertex_strategy(g::AbstractMeshGraph)::AddVertexStrategy
+    return USE_UVE
+end
+
+function convert(g::AbstractMeshGraph, coords::AbstractVector{<:Real})::AbstractVector{<:Real}
+     return coords
+end
+
+function distance(g::AbstractMeshGraph, v1::Integer, v2::Integer)::Real
+    return norm(xyz(g, v1) - xyz(g, v2))
+end
+
+function new_vertex_coords(g::AbstractMeshGraph, v1::Integer, v2::Integer)::AbstractVector{<:Real}
+    if  add_vertex_strategy(g) == USE_UVE
+        return mean([xyz(g, v1), xyz(g, v2)])
+    else
+        return mean([uve(g, v1), uve(g, v2)])
+    end
 end
 
 # -----------------------------------------------------------------------------
@@ -140,85 +244,21 @@ end
 # -----------------------------------------------------------------------------
 
 """
-    add_vertex_uve!(g, coords; uve_to_xyz)
+    add_vertex!(g, coords)
 
-Add new vertex with `[u, v, elevation]` coords `coords` to graph `g`. Calculate
-`xyz`. Return its `id`.
-
-# Arguments:
-- `g::AbstractMeshGraph`: Graph where the vertex will be added
-- `coords::AbstractVector{<:Real}`: `[u, v, elevation]` coordinates of new vertex
-- `uv_to_elev_xyz::Function`
-
-Where:
-    uve_to_xyz(coords)
-
-Calculate `xyz` based on `uv` coordinates and `elevation` (`coords`).
-Return vector `[x, y, z]`. Defaults to:
-- `x = u`
-- `y = v`
-- `z = elevation`
-
-See also [`add_vertex_xyz!`](@ref)
-"""
-add_vertex_uve!(
-    g::AbstractMeshGraph,
-    coords::AbstractVector{<:Real};
-    uve_to_xyz::Function = identity,
-)::Integer = add_vertex!(g, coords, true, uve_to_xyz)
-
-"""
-    add_vertex_xyz!(g, coords; xyz_to_uve)
-
-Add new vertex with `xyz` coords `coords` to graph `g`. Calculate `uv` and
-`elevation`. Return its `id`.
-
-# Arguments:
-- `g::AbstractMeshGraph`: Graph where the vertex will be added
-- `coords::AbstractVector{<:Real}`: `xyz` coordinates of new vertex
-- `xyz_to_uve::Function`
-
-Where:
-    xyz_to_uve(coords)
-
-Calculate `elevation` and `uv` based on `xyz` coordinates (`coords`).
-Return `[u, v, elevation]` vector. Defaults to:
-- `u = x`
-- `v = y`
-- `elevation = z`
-
-See also [`add_vertex_uve!`](@ref)
-"""
-add_vertex_xyz!(
-    g::AbstractMeshGraph,
-    coords::AbstractVector{<:Real};
-    xyz_to_uve::Function = identity,
-)::Integer = add_vertex!(g, coords, false, xyz_to_uve)
-
-"""
-    add_vertex!(g, coords, use_uv, convert_fun)
-
-Add new vertex with to graph `g`.
-
-If flag `use_uv` is set:
-- Add vertex with `xyz` coordinates `coords`
-- Calculate `elevation` and `uv` using `convert_fun` function
-Else:
-- Add vertex with `uv` coordinates `coords`
-- Calculate `elevation` and `xyz` using `convert_fun` function
-
-For details see [`add_vertex_uve!`](@ref), [`add_vertex_xyz!`](@ref)
+Add new vertex to graph `g`. Coords used (`xyz` or `uve`) depend on
+[`add_vertex_strategy`](@ref). Conversion from one to another is done using
+[`convert`](@ref).
 """
 function add_vertex!(
     g::AbstractMeshGraph,
-    coords::AbstractVector{<:Real},
-    use_uv::Bool,
-    convert_fun::Function,
+    coords::AbstractVector{<:Real}
 )::Integer
     Gr.add_vertex!(g.graph)
     MG.set_prop!(g.graph, nv(g), :type, VERTEX)
     converted_coords =
-        convert_fun(coords)::AbstractVector{<:Real}
+        convert(g, coords)::AbstractVector{<:Real}
+    use_uv = add_vertex_strategy(g) == USE_UVE
     xyz_coords, uv_coords =
         use_uv ? (converted_coords, coords) : (coords, converted_coords)
     MG.set_prop!(g.graph, nv(g), :uv, uv_coords[1:2])
@@ -229,7 +269,7 @@ function add_vertex!(
 end
 
 """
-    add_hanging!(g, v1, v2, coords, convert_fun)
+    add_hanging!(g, v1, v2, coords)
 
 Add hanging node between vertices `v1` and `v2`. Return its `id`. Other arguments
 are similar to [`add_vertex!`](@ref).
@@ -245,31 +285,10 @@ function add_hanging!(
     coords::AbstractVector{<:Real},
     v1::Integer,
     v2::Integer,
-    use_uv::Bool,
-    convert_fun::Function,
 )
-    add_vertex!(g, coords, use_uv, convert_fun)
+    add_vertex!(g, coords)
     set_hanging!(g, nv(g), v1, v2)
     nv(g)
-end
-
-function add_hanging_xyz!(g::AbstractMeshGraph,
-    coords::AbstractVector{<:Real},
-    v1::Integer,
-    v2::Integer;
-    xyz_to_uve::Function = identity,
-)
-    add_hanging!(g, coords, v1, v2, false, xyz_to_uve)
-end
-
-
-function add_hanging_uve!(g::AbstractMeshGraph,
-    coords::AbstractVector{<:Real},
-    v1::Integer,
-    v2::Integer;
-    uve_to_xyz::Function = identity,
-)
-    add_hanging!(g, coords, v1, v2, true, uve_to_xyz)
 end
 
 """
@@ -341,11 +360,14 @@ rem_edge!(g::AbstractMeshGraph, v1::Integer, v2::Integer) =
 # ------ Functions counting elements fo graph  --------------------------------
 # -----------------------------------------------------------------------------
 
+"Return graph specialization"
+spec(g::AbstractMeshGraph)::AbstractSpec = g.spec
+
 "Number of **all** vertices in graph `g`. Alias: [`nv`](@ref)"
 all_vertex_count(g::AbstractMeshGraph) = Gr.nv(g.graph)
 
 "Number of **all** vertices in graph `g`. Alias of [`vertex_count`](@ref)"
-nv = all_vertex_count
+const nv = all_vertex_count
 
 "Number of normal vertices in graph `g`"
 vertex_count(g::AbstractMeshGraph) = g.vertex_count
@@ -479,7 +501,6 @@ get_elevation(g::AbstractMeshGraph, v::Integer)::Real =
 
 function set_elevation!(g::AbstractMeshGraph, v::Integer, elevation::Real)
     MG.set_prop!(g.graph, v, :elevation, elevation)
-    update_xyz!(g, v)
 end
 
 should_refine(g::AbstractMeshGraph, i::Integer)::Bool =

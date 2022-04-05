@@ -1,7 +1,7 @@
 function check_p6 end
 
 """
-    transform_p6!(g, center, use_uv, new_coords_fun, converter_fun)
+    transform_p6!(g, center)
 
 Run transgormation P6 on triangle represented by interior `center`.
 
@@ -20,13 +20,9 @@ Conditions:
 """
 function transform_p6!(
     g::MeshGraph,
-    center::Integer;
-    use_uv::Bool,
-    distance_fun::Function,
-    new_coords_fun::Function,
-    converter_fun::Function,
+    center::Integer
 )::Bool
-    mapping = check_p6(g, center, distance_fun)
+    mapping = check_p6(g, center)
     if isnothing(mapping)
         return false
     end
@@ -46,7 +42,7 @@ function transform_p6!(
 end
 
 
-function check_p6(g::MeshGraph, center::Integer, distance_fun::Function)
+function check_p6(g::MeshGraph, center::Integer)
     if !is_interior(g, center)
         return nothing
     end
@@ -63,9 +59,9 @@ function check_p6(g::MeshGraph, center::Integer, distance_fun::Function)
         return nothing
     end
 
-    lA = distance_fun(g, vB, hA) + distance_fun(g, vC, hA)
-    lB = distance_fun(g, vA, hB) + distance_fun(g, vC, hB)
-    lC = distance_fun(g, vA, hC) + distance_fun(g, vB, hC)
+    lA = distance(g, vB, hA) + distance(g, vC, hA)
+    lB = distance(g, vA, hB) + distance(g, vC, hB)
+    lC = distance(g, vA, hC) + distance(g, vB, hC)
     longest = maximum([lA, lB, lC])
 
     v1 = nothing
@@ -100,9 +96,9 @@ function check_p6(g::MeshGraph, center::Integer, distance_fun::Function)
         return nothing
     end
 
-    L12 = distance_fun(g, v1, v2)
-    L34 = distance_fun(g, v2, v3)
-    L56 = distance_fun(g, v3, v1)
+    L12 = distance(g, v1, v2)
+    L34 = distance(g, v2, v3)
+    L56 = distance(g, v3, v1)
 
     if L12 >= L34 && L12 >= L56
         return v1, v2, v3, h1, h2, h3

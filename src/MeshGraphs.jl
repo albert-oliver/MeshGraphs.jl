@@ -2,21 +2,31 @@ module MeshGraphs
 
 export AbstractMeshGraph,
     MeshGraph,
+    AbstractSpec,
     VERTEX,
     INTERIOR,
     HANGING,
+    AddVertexStrategy,
+    USE_UVE,
+    USE_XYZ,
+
+    # To implement
+
+    add_vertex_strategy,
+    convert,
+    distance,
+    new_vertex_coords,
 
     # Refiner
-    refine_xyz!,
-    refine_uve!,
+    refine!,
 
     # Adding / removing
-    add_vertex_xyz!,
-    add_vertex_uve!,
+    add_vertex!,
     add_interior!,
     add_edge!,
 
-    # Counts
+    # Graph properties
+    spec,
     all_vertex_count,
     nv,
     vertex_count,
@@ -60,7 +70,11 @@ export AbstractMeshGraph,
     vertex_map,
     update_boundaries!,
     rectangle_graph_uve,
-    export_inp
+    export_inp,
+
+    # SimpleGraph
+    SimpleGraph,
+    SimpleSpec
 
 
 include("meshgraph.jl")
@@ -68,5 +82,6 @@ include("refiner/refiner.jl")
 include("utils.jl")
 include("io.jl")
 include("rectangle_mesh.jl")
+include("simplegraph.jl")
 
 end # module
