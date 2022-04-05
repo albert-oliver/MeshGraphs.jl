@@ -10,4 +10,4 @@ function are defaut. See: [`add_vertex_strategy`](@ref), [`convert`](@ref),
 """
 const SimpleGraph = MeshGraph{SimpleSpec}
 
-SimpleGraph() = SimpleGraph(SimpleSpec())
+SimpleGraph() = MeshGraph(SimpleSpec())

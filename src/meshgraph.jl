@@ -130,7 +130,7 @@ mutable struct MeshGraph{T <: AbstractSpec} <: AbstractMeshGraph
     interior_count::Integer
     hanging_count::Integer
 
-    MeshGraph{T}(spec::T) where T <: AbstractSpec = new(spec, MG.MetaGraph(), 0, 0, 0)
+    MeshGraph(spec::T) where T <: AbstractSpec = new{T}(spec, MG.MetaGraph(), 0, 0, 0)
 end
 
 function Base.show(io::IO, g::AbstractMeshGraph)
@@ -501,7 +501,6 @@ get_elevation(g::AbstractMeshGraph, v::Integer)::Real =
 
 function set_elevation!(g::AbstractMeshGraph, v::Integer, elevation::Real)
     MG.set_prop!(g.graph, v, :elevation, elevation)
-    update_xyz!(g, v)
 end
 
 should_refine(g::AbstractMeshGraph, i::Integer)::Bool =

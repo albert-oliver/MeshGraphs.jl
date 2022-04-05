@@ -4,8 +4,8 @@ function rectangle_graph_uve(
     y_min,
     y_max,
     n_elem_x,
-    n_elem_y;
-    uve_to_xyz = identity,
+    n_elem_y,
+    spec::AbstractSpec
 )
     coords, conec = rectangle_triangular_mesh(
         x_min,
@@ -16,30 +16,20 @@ function rectangle_graph_uve(
         n_elem_y,
     )
 
-    return create_meshgraph_from_mesh(coords, conec; uve_to_xyz = uve_to_xyz)
+    return MeshGraph(coords, conec, spec)
 end
 
-function create_meshgraph_from_mesh(coords::AbstractMatrix{<:Real}, conec::AbstractMatrix{<:Integer}; uve_to_xyz = identity)
-    g = MeshGraph()
+rectangle_graph_uve(x_min, x_max, y_min, y_max, n_elem_x, n_elem_y) =
+    rectangle_graph_uve(
+        x_min,
+        x_max,
+        y_min,
+        y_max,
+        n_elem_x,
+        n_elem_y,
+        SimpleSpec(),
+    )
 
-    for uv in eachcol(coords)
-        add_vertex_uve!(g, vcat(uv, 0), uve_to_xyz = uve_to_xyz)
-    end
-
-    if any(conec .== 0)
-        conec = conec .+ 1
-    end
-
-    for vs in eachcol(conec)
-        add_interior!(g, vs)
-        add_edge!(g, vs[1], vs[2])
-        add_edge!(g, vs[2], vs[3])
-        add_edge!(g, vs[3], vs[1])
-    end
-
-    update_boundaries!(g)
-    return g
-end
 
 function rectangle_triangular_mesh(
     x_min,
