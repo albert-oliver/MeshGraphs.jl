@@ -254,6 +254,7 @@ function add_vertex!(
     g::AbstractMeshGraph,
     coords::AbstractVector{<:Real}
 )::Integer
+    coords = copy(coords)
     Gr.add_vertex!(g.graph)
     MG.set_prop!(g.graph, nv(g), :type, VERTEX)
     converted_coords =
@@ -492,11 +493,11 @@ end
 
 "Return vector with `xyz` coordinates of vertex `v`"
 xyz(g::AbstractMeshGraph, v::Integer)::Vector{<:Real} =
-    MG.get_prop(g.graph, v, :xyz)
+    copy(MG.get_prop(g.graph, v, :xyz))
 
 "Return vector with `uv` coordinates of vertex `v`"
 uv(g::AbstractMeshGraph, v::Integer)::Vector{<:Real} =
-    MG.get_prop(g.graph, v, :uv)
+    copy(MG.get_prop(g.graph, v, :uv))
 
 "Return vector `[u, v, elevation]`"
 uve(g::AbstractMeshGraph, v::Integer)::Vector{<:Real} =
