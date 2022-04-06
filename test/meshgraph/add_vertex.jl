@@ -1,6 +1,6 @@
 @testset "add_vertex!" begin
     struct TestSpec <: AbstractSpec end
-    TestGraph() = MeshGraph{TestSpec}(TestSpec())
+    TestGraph() = MeshGraph(TestSpec())
 
     @testset "Graph properties" begin
 

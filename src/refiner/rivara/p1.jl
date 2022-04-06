@@ -44,8 +44,8 @@ function transform_p1!(
     add_edge!(g, v4, v2; boundary = B1)
     add_edge!(g, v4, h; boundary = false)
 
-    add_interior!(g, v1, h, v4)
-    add_interior!(g, v2, h, v4)
+    add_pure_interior!(g, v1, h, v4)
+    add_pure_interior!(g, v2, h, v4)
 
     rem_vertex!(g, center)
 
@@ -102,8 +102,8 @@ function check_p1(g::MeshGraph, center::Integer)
     B2 = is_on_boundary(g, v2, h)
     B3 = is_on_boundary(g, h, v1)
     L1 = distance(g, v1, v2)
-    L2 = distance(g, h, v1)
-    L3 = distance(g, h, v2)
+    L2 = distance(g, v2, h)
+    L3 = distance(g, h, v1)
     HN1 = is_hanging(g, v1)
     HN2 = is_hanging(g, v2)
 

@@ -2,7 +2,7 @@
     struct FieldSpec <: AbstractSpec
         test_field::Real
     end
-    FieldGraph(test_field) = MeshGraph{FieldSpec}(FieldSpec(test_field))
+    FieldGraph(test_field) = MeshGraph(FieldSpec(test_field))
 
     @testset "Create graph with custom field" begin
         g = FieldGraph(42)

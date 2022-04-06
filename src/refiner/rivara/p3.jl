@@ -46,8 +46,8 @@ function transform_p3!(
     add_edge!(g, v3, v5, boundary=B3)
     add_edge!(g, v2, v5, boundary=false)
 
-    add_interior!(g, v1, v2, v5)
-    add_interior!(g, v2, v5, v3)
+    add_pure_interior!(g, v1, v2, v5)
+    add_pure_interior!(g, v2, v5, v3)
 
     rem_vertex!(g, center)
 

@@ -30,7 +30,7 @@ function run_for_all_triangles!(
     for v in interiors(g)
         ex = production(g, v)
         if ex && log
-            println("Executed: ", String(Symbol(fun)), " on ", v)
+            println("Executed: ", String(Symbol(production)), " on ", v)
         end
         ran |= ex
     end
@@ -56,7 +56,7 @@ Execution can be controlled by providing custom type for graph. For details see
 Execute all transformations (P1-P6) on all interiors of graph `g`. Stop when no
 more transformations can be executed.
 """
-function refine!(g::AbstractMeshGraph; log=false)
+function refine!(g::AbstractMeshGraph; log = false)
     while true
         ran = false
         ran |= run_for_all_triangles!(g, transform_p1!; log = log)

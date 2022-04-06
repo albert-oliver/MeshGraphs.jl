@@ -27,6 +27,8 @@ function update_boundaries!(g::AbstractMeshGraph)
         interiors = intersect(interiors1, interiors2)
         if length(interiors) == 1
             set_boundary!(g, v1, v2)
+        else
+            unset_boundary!(g, v1, v2)
         end
     end
 end

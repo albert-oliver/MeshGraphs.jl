@@ -1,6 +1,6 @@
 @testset "refine custom values" begin
     struct TestSpec <: AbstractSpec end
-    TestGraph() = MeshGraph{TestSpec}(TestSpec())
+    TestGraph() = MeshGraph(TestSpec())
 
     function MeshGraphs.convert(
         g::MeshGraph{TestSpec},

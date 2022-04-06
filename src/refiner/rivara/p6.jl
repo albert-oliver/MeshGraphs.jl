@@ -33,8 +33,8 @@ function transform_p6!(
 
     add_edge!(g, v3, h1)
 
-    add_interior!(g, v1, h1, v3)
-    add_interior!(g, h1, v2, v3)
+    add_pure_interior!(g, v1, h1, v3)
+    add_pure_interior!(g, h1, v2, v3)
 
     rem_vertex!(g, center)
 
@@ -71,21 +71,21 @@ function check_p6(g::MeshGraph, center::Integer)
     h2 = nothing
     h3 = nothing
 
-    if longest == lA
+    if longest ≈ lA
         v1 = vB
         v2 = vC
         v3 = vA
         h1 = hA
         h2 = hB
         h3 = hB
-    elseif longest == lB
+    elseif longest ≈ lB
         v1 = vC
         v2 = vA
         v3 = vB
         h1 = hB
         h2 = hC
         h3 = hA
-    elseif longest == lC
+    elseif longest ≈ lC
         v1 = vA
         v2 = vB
         v3 = vC
@@ -96,12 +96,5 @@ function check_p6(g::MeshGraph, center::Integer)
         return nothing
     end
 
-    L12 = distance(g, v1, v2)
-    L34 = distance(g, v2, v3)
-    L56 = distance(g, v3, v1)
-
-    if L12 >= L34 && L12 >= L56
-        return v1, v2, v3, h1, h2, h3
-    end
-    return nothing
+    return v1, v2, v3, h1, h2, h3
 end

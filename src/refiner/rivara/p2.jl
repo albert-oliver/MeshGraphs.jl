@@ -34,8 +34,8 @@ function transform_p2!(
     add_edge!(g, h, v3)
 
     # TODO view of center to add_interior to split points
-    add_interior!(g, v1, v3, h)
-    add_interior!(g, v2, v3, h)
+    add_pure_interior!(g, v1, v3, h)
+    add_pure_interior!(g, v2, v3, h)
 
     rem_vertex!(g, center)
 

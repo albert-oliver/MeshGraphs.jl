@@ -32,7 +32,7 @@ function transform_p5!(
 
     B5 = is_on_boundary(g, v1, v3)
 
-    new_coords = new_vertex_coords(g, v1, v2)
+    new_coords = new_vertex_coords(g, v1, v3)
     v6 = add_vertex!(g, new_coords)
     if !B5
         set_hanging!(g, v6, v1, v3)
@@ -42,8 +42,8 @@ function transform_p5!(
     add_edge!(g, v6, v3; boundary=B5)
     add_edge!(g, v2, v6, boundary=false)
 
-    add_interior!(g, v1, v2, v6)
-    add_interior!(g, v6, v2, v3)
+    add_pure_interior!(g, v1, v2, v6)
+    add_pure_interior!(g, v6, v2, v3)
 
     rem_edge!(g, v1, v3)
     rem_vertex!(g, center)

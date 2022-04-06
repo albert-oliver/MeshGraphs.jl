@@ -8,7 +8,7 @@ function p1_graph_1()
     add_vertex!(g, [1.0, 0.0, 1.0])
     add_vertex!(g, [0.5, 1.0, -1.0])
 
-    add_interior!(g, 3, 4, 5; refine=true)
+    MeshGraphs.add_pure_interior!(g, 3, 4, 5; refine=true)
 
     add_edge!(g, 3, 4)
     add_edge!(g, 4, 5; boundary=true)
@@ -25,7 +25,7 @@ function p1_graph_2()
     add_vertex!(g, [1.0, 0.0, 1.0])
     add_vertex!(g, [0.5, 1.0, -1.0])
 
-    add_interior!(g, 1, 2, 3; refine=true)
+    MeshGraphs.add_pure_interior!(g, 1, 2, 3; refine=true)
 
     add_edge!(g, 1, 2)
     add_edge!(g, 2, 3)
@@ -43,7 +43,7 @@ function p2_graph_1()
     add_vertex!(g, [2.0, 0.0, 0.0])
     MeshGraphs.add_hanging!(g, [1.0, 0.0, 0.0], 1, 3)
 
-    add_interior!(g, 1, 2, 3)
+    MeshGraphs.add_pure_interior!(g, 1, 2, 3)
 
     add_edge!(g, 1, 2)
     add_edge!(g, 2, 3; boundary=true)
@@ -62,7 +62,7 @@ function p3_graph_1()
     add_vertex!(g, [2.0, 0.0, 0.0])
     MeshGraphs.add_hanging!(g, [1.0, 0.0, 0.0], 1, 3)
 
-    add_interior!(g, 1, 2, 3)
+    MeshGraphs.add_pure_interior!(g, 1, 2, 3)
 
     add_edge!(g, 1, 2)
     add_edge!(g, 2, 3; boundary=true)
@@ -81,7 +81,7 @@ function p3_graph_2()
     add_vertex!(g, [2.0, 0.0, 0.0])
     MeshGraphs.add_hanging!(g, [1.0, 0.0, 0.0], 1, 3)
 
-    add_interior!(g, 1, 2, 3)
+    MeshGraphs.add_pure_interior!(g, 1, 2, 3)
 
     add_edge!(g, 1, 2)
     add_edge!(g, 2, 3)
@@ -102,7 +102,7 @@ function p4_graph_1()
     MeshGraphs.add_hanging!(g, [1.5, 0.5, 0.0], 2, 3)
 
 
-    add_interior!(g, 1, 2, 3)
+    MeshGraphs.add_pure_interior!(g, 1, 2, 3)
 
     add_edge!(g, 1, 3)
     add_edge!(g, 1, 4)
@@ -124,7 +124,7 @@ function p4_graph_2()
     MeshGraphs.add_hanging!(g, [0.5, 0.5, 0.0], 1, 3)
 
 
-    add_interior!(g, 1, 2, 3)
+    MeshGraphs.add_pure_interior!(g, 1, 2, 3)
 
     add_edge!(g, 1, 4)
     add_edge!(g, 4, 2)
@@ -145,7 +145,7 @@ function p5_graph_1()
     MeshGraphs.add_hanging!(g, [0.5, 0.5, 0.0], 1, 3)
     MeshGraphs.add_hanging!(g, [1.5, 0.5, 0.0], 2, 3)
 
-    add_interior!(g, 1, 2, 3)
+    MeshGraphs.add_pure_interior!(g, 1, 2, 3)
 
     add_edge!(g, 1, 2; boundary=true)
     add_edge!(g, 2, 5)
@@ -167,7 +167,7 @@ function p5_graph_2()
     MeshGraphs.add_hanging!(g, [1.5, 0.5, 0.0], 2, 3)
 
 
-    add_interior!(g, 1, 2, 3)
+    MeshGraphs.add_pure_interior!(g, 1, 2, 3)
 
     add_edge!(g, 1, 2)
     add_edge!(g, 2, 5)
@@ -189,7 +189,7 @@ function p6_graph_1()
     MeshGraphs.add_hanging!(g, [1.5, 0.5, 0.0], 2, 3)
     MeshGraphs.add_hanging!(g, [0.5, 0.5, 0.0], 1, 3)
 
-    add_interior!(g, 1, 2, 3)
+    MeshGraphs.add_pure_interior!(g, 1, 2, 3)
 
     add_edge!(g, 1, 4)
     add_edge!(g, 4, 2)

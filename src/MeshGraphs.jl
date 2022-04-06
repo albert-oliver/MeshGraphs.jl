@@ -78,9 +78,9 @@ export AbstractMeshGraph,
 
 
 include("meshgraph.jl")
+include("io.jl")
 include("refiner/refiner.jl")
 include("utils.jl")
-include("io.jl")
 include("rectangle_mesh.jl")
 include("simplegraph.jl")
 

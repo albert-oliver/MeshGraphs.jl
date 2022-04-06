@@ -32,8 +32,8 @@ function transform_p4!(
     add_edge!(g, v3, h1)
     unset_hanging!(g, h1)
 
-    add_interior!(g, v1, h1, v3)
-    add_interior!(g, h1, v2, v3)
+    add_pure_interior!(g, v1, h1, v3)
+    add_pure_interior!(g, h1, v2, v3)
 
     rem_vertex!(g, center)
 

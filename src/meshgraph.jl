@@ -291,20 +291,8 @@ function add_hanging!(
     nv(g)
 end
 
-"""
-    add_interior!(g, v1, v2, v3; refine=false)
-    add_interior!(g, vs; refine=false)
-
-Add interior to graph `g` that represents traingle with vertices `v1`, `v2` and
-`v3` (or vector `vs = [v1, v2, v3]`). Return its `id`.
-
-# Note
-This will **not** create any edges between those vertices. However it will
-create edges between new `INTERIOR` vertex and each of the three.
-"""
-function add_interior! end
-
-function add_interior!(
+"Add interior without edges connecting vertices `v1`, `v2`, `v3`"
+function add_pure_interior!(
     g::AbstractMeshGraph,
     v1::Integer,
     v2::Integer,
@@ -319,6 +307,33 @@ function add_interior!(
     Gr.add_edge!(g.graph, nv(g), v3)
     g.interior_count += 1
     return nv(g)
+end
+
+"""
+    add_interior!(g, v1, v2, v3; refine=false)
+    add_interior!(g, vs; refine=false)
+
+Add interior to graph `g` that represents traingle with vertices `v1`, `v2` and
+`v3` (or vector `vs = [v1, v2, v3]`). Return its `id`.
+
+# Note
+This **will** create edges between those vertices, as well as edges
+between new `INTERIOR` vertex and each of the three.
+"""
+function add_interior! end
+
+function add_interior!(
+    g::AbstractMeshGraph,
+    v1::Integer,
+    v2::Integer,
+    v3::Integer;
+    refine::Bool = false,
+)
+    v = add_pure_interior!(g, v1, v2, v3; refine=refine)
+    add_edge!(g, v1, v2)
+    add_edge!(g, v2, v3)
+    add_edge!(g, v3, v1)
+    return v
 end
 
 function add_interior!(
@@ -336,8 +351,11 @@ function add_edge!(
     v2::Integer;
     boundary::Bool = false,
 )
-    Gr.add_edge!(g.graph, v1, v2)
-    MG.set_prop!(g.graph, v1, v2, :boundary, boundary)
+    result = Gr.add_edge!(g.graph, v1, v2)
+    if result
+        MG.set_prop!(g.graph, v1, v2, :boundary, boundary)
+    end
+    return nothing
 end
 
 "Remove vertex `v` of any type from graph."
