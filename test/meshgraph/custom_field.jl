@@ -11,6 +11,7 @@
 
     @testset "Custom field in convert" begin
         g = FieldGraph(42)
+        MeshGraphs.add_vertex_strategy(g::MeshGraph{FieldSpec}) = USE_UVE
         MeshGraphs.convert(g::MeshGraph{FieldSpec}, coords::AbstractVector{<:Real}) =
             [coords[1], coords[2], spec(g).test_field]
 

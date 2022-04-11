@@ -16,7 +16,7 @@ Two edges with hanging node, one of them is the longest edge.
 ```
 
 Conditions:
-- Breaks triangle if hanging node is on the longes edge
+- Breaks triangle if hanging node is on the longest edge
 """
 function transform_p4!(
     g::MeshGraph,

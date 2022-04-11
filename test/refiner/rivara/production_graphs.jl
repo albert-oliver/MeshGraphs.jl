@@ -1,3 +1,37 @@
+function generate_graph(
+    permutation,
+    edges,
+    interior,
+    coords,
+    hanging,
+    boundaries;
+    refine = false,
+)
+    g = SimpleGraph()
+    v_map = zeros(Int, length(permutation))
+
+    for v in permutation
+        v_map[v] = add_vertex!(g, coords[:, v])
+    end
+
+    if !isempty(hanging)
+        for (i, h) in enumerate(hanging[1, :])
+            v1 = v_map[hanging[2, i]]
+            v2 = v_map[hanging[3, i]]
+            MeshGraphs.set_hanging!(g, v_map[h], v1, v2)
+        end
+    end
+
+    for ((v1, v2), boundary) in zip(eachcol(edges), boundaries)
+        add_edge!(g, v_map[v1], v_map[v2]; boundary = boundary)
+    end
+
+    vs = v_map[interior]
+    MeshGraphs.add_pure_interior!(g, vs; refine = refine)
+
+    return g
+end
+
 "Return graph on which production P1 should run."
 function p1_graph_1()
     g = SimpleGraph()

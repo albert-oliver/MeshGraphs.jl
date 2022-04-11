@@ -30,7 +30,7 @@ function transform_p3!(
         return false
     end
 
-    v1, v2, v3, h = mapping
+    v1, v2, v3 = mapping
 
     B3 = is_on_boundary(g, v1, v3)
 
@@ -79,71 +79,35 @@ function check_p3(g::MeshGraph, center::Integer)
 
     if !isnothing(hA)
         h = hA
+        L45 = distance(g, vB, h) + distance(g, h, vC)
+        vs = [vB, vC, vA]
     elseif !isnothing(hB)
         h = hB
+        L45 = distance(g, vA, h) + distance(g, h, vC)
+        vs = [vA, vC, vB]
     else
         h = hC
+        L45 = distance(g, vA, h) + distance(g, h, vB)
+        vs = [vA, vB, vC]
     end
 
-    lAB = distance(g, vA, vB)
-    lBC = distance(g, vB, vC)
-    lCA = distance(g, vC, vA)
-    longest = maximum([lAB, lBC, lCA])
+    check_conditions = []
+    for (v1, v2, v3) in [vs[[1, 2, 3]], vs[[2, 1, 3]]]
+        L2 = distance(g, v2, v3)
+        L3 = distance(g, v1, v3)
+        B2 = is_on_boundary(g, v2, v3)
+        B3 = is_on_boundary(g, v1, v3)
+        HN1 = is_hanging(g, v1)
+        HN3 = is_hanging(g, v3)
 
-    if longest == lAB
-        if h == hA
-            v1 = vB
-            v2 = vC
-            v3 = vA
-        elseif h == hB
-            v1 = vA
-            v2 = vC
-            v3 = vB
-        else
-            return nothing
-        end
-    elseif longest == lBC
-        if h == hB
-            v1 = vC
-            v2 = vA
-            v3 = vB
-        elseif h == hC
-            v1 = vB
-            v2 = vA
-            v3 = vC
-        else
-            return nothing
-        end
-    else # longest == lCA
-        if h == hA
-            v1 = vC
-            v2 = vB
-            v3 = vA
-        elseif h == hC
-            v1 = vA
-            v2 = vB
-            v3 = vC
-        else
-            return nothing
+        if ((L3 > L45) && (L3 >= L2)) && (B3 ||
+            ( !B3 && (!HN1 && !HN3) && (!(B2 && L2 == L3))) )
+            push!(check_conditions, (v1, v2, v3))
         end
     end
-
-    if !has_edge(g, v1, v3) ||
-       !has_edge(g, v2, v3)
-        return nothing
-    end
-
-    L45 = distance(g, v1, v2)
-    L2 = distance(g, v2, v3)
-    L3 = distance(g, v1, v3)
-    B2 = is_on_boundary(g, v2, v3)
-    B3 = is_on_boundary(g, v1, v3)
-    HN1 = is_hanging(g, v1)
-    HN3 = is_hanging(g, v3)
-
-    if ((L3 > L45) && (L3 >= L2)) && (B3 ||
-        ( !B3 && (!HN1 && !HN3) && (!(B2 && L2 == L3))) )
-        return v1, v2, v3, h
+    if !isempty(check_conditions)
+        # Here we can undraw
+        return check_conditions[1]
     end
     return nothing
 end

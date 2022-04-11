@@ -69,7 +69,7 @@ export AbstractMeshGraph,
     # Other
     vertex_map,
     update_boundaries!,
-    rectangle_graph_uve,
+    rectangle_graph,
     export_inp,
 
     # SimpleGraph

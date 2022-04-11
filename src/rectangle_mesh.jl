@@ -1,11 +1,11 @@
-function rectangle_graph_uve(
+function rectangle_graph(
+    spec::AbstractSpec,
     x_min,
     x_max,
     y_min,
     y_max,
     n_elem_x,
     n_elem_y,
-    spec::AbstractSpec
 )
     coords, conec = rectangle_triangular_mesh(
         x_min,
@@ -19,15 +19,15 @@ function rectangle_graph_uve(
     return MeshGraph(coords, conec, spec)
 end
 
-rectangle_graph_uve(x_min, x_max, y_min, y_max, n_elem_x, n_elem_y) =
-    rectangle_graph_uve(
+rectangle_graph(x_min, x_max, y_min, y_max, n_elem_x, n_elem_y) =
+    rectangle_graph(
+        SimpleSpec(),
         x_min,
         x_max,
         y_min,
         y_max,
         n_elem_x,
         n_elem_y,
-        SimpleSpec(),
     )
 
 

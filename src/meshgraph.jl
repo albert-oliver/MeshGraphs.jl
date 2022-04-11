@@ -220,7 +220,7 @@ function new_vertex_coords end
 # -----------------------------------------------------------------------------
 
 function add_vertex_strategy(g::AbstractMeshGraph)::AddVertexStrategy
-    return USE_UVE
+    return USE_XYZ
 end
 
 function convert(g::AbstractMeshGraph, coords::AbstractVector{<:Real})::AbstractVector{<:Real}
@@ -293,6 +293,8 @@ function add_hanging!(
 end
 
 "Add interior without edges connecting vertices `v1`, `v2`, `v3`"
+function add_pure_interior! end
+
 function add_pure_interior!(
     g::AbstractMeshGraph,
     v1::Integer,
@@ -309,6 +311,12 @@ function add_pure_interior!(
     g.interior_count += 1
     return nv(g)
 end
+
+add_pure_interior!(
+    g::AbstractMeshGraph,
+    vs::AbstractVector{<:Integer};
+    refine::Bool = false,
+) = add_pure_interior!(g, vs[1], vs[2], vs[3]; refine = refine)
 
 """
     add_interior!(g, v1, v2, v3; refine=false)
@@ -520,6 +528,8 @@ get_elevation(g::AbstractMeshGraph, v::Integer)::Real =
 
 function set_elevation!(g::AbstractMeshGraph, v::Integer, elevation::Real)
     MG.set_prop!(g.graph, v, :elevation, elevation)
+    new_xyz = convert(g, uve(g, v))
+    MG.set_prop!(g.graph, v, :xyz, new_xyz)
 end
 
 should_refine(g::AbstractMeshGraph, i::Integer)::Bool =

@@ -79,37 +79,25 @@ function check_p1(g::MeshGraph, center::Integer)
         return nothing
     end
 
-    la = distance(g, vs[1], vs[2])
-    lb = distance(g, vs[2], vs[3])
-    lc = distance(g, vs[3], vs[1])
-    longest = maximum([la, lb, lc])
+    check_conditions = []
+    for (v1, v2, h) in [vs[[1, 2, 3]], vs[[2, 3, 1]], vs[[3, 1, 2]]]
+        B1 = is_on_boundary(g, v1, v2)
+        B2 = is_on_boundary(g, v2, h)
+        B3 = is_on_boundary(g, h, v1)
+        L1 = distance(g, v1, v2)
+        L2 = distance(g, v2, h)
+        L3 = distance(g, h, v1)
+        HN1 = is_hanging(g, v1)
+        HN2 = is_hanging(g, v2)
 
-    if longest == la
-        v1 = vs[1]
-        v2 = vs[2]
-        h = vs[3]
-    elseif longest == lb
-        v1 = vs[2]
-        v2 = vs[3]
-        h = vs[1]
-    else
-        v1 = vs[1]
-        v2 = vs[3]
-        h = vs[2]
+        if (L1 >= L2) && (L1 >= L3) && (B1 ||
+            (!B1 && (!HN1 && !HN2) && !((B2 && L2 == L1) || (B3 && L3==L1))) )
+            push!(check_conditions, (h, v1, v2))
+        end
     end
-
-    B1 = is_on_boundary(g, v1, v2)
-    B2 = is_on_boundary(g, v2, h)
-    B3 = is_on_boundary(g, h, v1)
-    L1 = distance(g, v1, v2)
-    L2 = distance(g, v2, h)
-    L3 = distance(g, h, v1)
-    HN1 = is_hanging(g, v1)
-    HN2 = is_hanging(g, v2)
-
-    if (L1 >= L2) && (L1 >= L3) && (B1 ||
-        (!B1 && (!HN1 && !HN2) && !((B2 && L2 == L1) || (B3 && L3==L1))) )
-        return h, v1, v2
+    if !isempty(check_conditions)
+        # Here we can undraw
+        return check_conditions[1]
     end
     return nothing
 end
