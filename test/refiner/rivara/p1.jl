@@ -25,7 +25,7 @@
         interior = [1, 2, 3]
         hanging = []
 
-        @testset "Vertex permutation $(perm)" for perm in permutations(vertices)
+        @testset "Vertex permutation $(perm)" for perm in shifted_arrays(vertices)
             i_perm = interior
             @testset "No boundaries" begin
                 boundaries = [false, false, false]
@@ -89,7 +89,7 @@
         interior = [1, 2, 3]
         hanging = []
 
-        @testset "Vertex permutation $(perm)" for perm in permutations(vertices)
+        @testset "Vertex permutation $(perm)" for perm in shifted_arrays(vertices)
             i_perm = interior
             @testset "Boundary not longest edge" begin
                 boundaries = [true, false, false]

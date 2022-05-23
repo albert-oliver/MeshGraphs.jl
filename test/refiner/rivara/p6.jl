@@ -29,7 +29,7 @@
             2 3 1
         ]
 
-        @testset "Vertex permutation $(perm)" for perm in permutations(vertices)
+        @testset "Vertex permutation $(perm)" for perm in shifted_arrays(vertices)
             i_perm = interior
             @testset "No boundaries" begin
                 boundaries = [false, false, false, false, false, false]

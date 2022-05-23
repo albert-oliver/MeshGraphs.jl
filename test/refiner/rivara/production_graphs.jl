@@ -32,6 +32,10 @@ function generate_graph(
     return g
 end
 
+function shifted_arrays(a)
+    [circshift(a, n) for n in 1:length(a)]
+end
+
 "Return graph on which production P1 should run."
 function p1_graph_1()
     g = SimpleGraph()
