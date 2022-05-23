@@ -464,7 +464,7 @@ is_ordinary_edge(g::AbstractMeshGraph, v1::Integer, v2::Integer) =
 
 "Return *all* edges in graph `g` (including possibly edges between interiors
 and) its vertices. To get ordinary edges use [`edges`](@ref)."
-all_edges(g::AbstractMeshGraph) = map(e -> [Gr.src(e), Gr.dst(e)], Gr.edges(g.graph))
+all_edges(g::AbstractMeshGraph) = map(e -> (Gr.src(e), Gr.dst(e)), Gr.edges(g.graph))
 
 "Return oridanry edges in graph `g`. To get all edges use [`all_edges`](@ref)."
 function edges(g::AbstractMeshGraph)

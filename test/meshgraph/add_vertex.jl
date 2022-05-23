@@ -25,6 +25,22 @@
         end
     end
 
+    @testset "Type" begin
+        g = TestGraph()
+        add_vertex!(g, [1, 2, 3])
+        @test is_vertex(g, 1) == true
+        @test is_interior(g, 1) == false
+        @test MeshGraphs.is_hanging(g, 1) == false
+        @test get_type(g, 1) == VERTEX
+    end
+
+    @testset "Elevation" begin
+        g = TestGraph()
+        add_vertex!(g, [1, 2, 3])
+        set_elevation!(g, 1, 10)
+        @test get_elevation(g, 1) == 10
+    end
+
     @testset "Default convert" begin
         @testset "Add xyz" begin
             MeshGraphs.add_vertex_strategy(g::MeshGraph{TestSpec}) = USE_XYZ
@@ -32,6 +48,7 @@
             add_vertex!(g, [1, 2, 3])
             @test xyz(g, 1) == [1, 2, 3]
             @test uv(g, 1) == [1, 2]
+            @test uve(g, 1) == [1, 2, 3]
             @test get_elevation(g, 1) == 3
         end
 
@@ -41,6 +58,7 @@
             add_vertex!(g, [1, 2, 3])
             @test xyz(g, 1) == [1, 2, 3]
             @test uv(g, 1) == [1, 2]
+            @test uve(g, 1) == [1, 2, 3]
             @test get_elevation(g, 1) == 3
         end
     end
@@ -57,6 +75,7 @@
             add_vertex!(g, [1, 2, 3])
             @test xyz(g, 1) == [1, 2, 3]
             @test uv(g, 1) == [4, 5]
+            @test uve(g, 1) == [4, 5, 6]
             @test get_elevation(g, 1) == 6
         end
 
@@ -70,8 +89,8 @@
             add_vertex!(g, [4, 5, 6])
             @test xyz(g, 1) == [1, 2, 3]
             @test uv(g, 1) == [4, 5]
+            @test uve(g, 1) == [4, 5, 6]
             @test get_elevation(g, 1) == 6
         end
     end
-
 end
