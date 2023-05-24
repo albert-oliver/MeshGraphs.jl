@@ -528,7 +528,11 @@ get_elevation(g::AbstractMeshGraph, v::Integer)::Real =
 
 function set_elevation!(g::AbstractMeshGraph, v::Integer, elevation::Real)
     MG.set_prop!(g.graph, v, :elevation, elevation)
-    new_xyz = convert(g, uve(g, v))
+    if add_vertex_strategy(g) == USE_UVE
+        new_xyz = convert(g, uve(g, v))
+    else
+        new_xyz = [xyz(g, v)[1:2]..., elevation]
+    end
     MG.set_prop!(g.graph, v, :xyz, new_xyz)
 end
 
